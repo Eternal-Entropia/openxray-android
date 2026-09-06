@@ -1,13 +1,3 @@
-OpenXRay is a fan-created modification of the X-Ray Engine (also referred to as XRAY and X-ray) developed by GSC Game World.
-OpenXRay is not an official product of GSC Game World and is a derivative work based on the original X-Ray Engine sources.
-
-This community project is not affiliated with GSC Game World in any way.
-When using OpenXRay for making modifications for S.T.A.L.K.E.R. games developed by GSC Game World, follow the official EULA and Fan Content Creation Guidelines:
-https://www.gsc-game.com/eula/
-https://www.gsc-game.com/guidelines/
-
-All the modifications to the original code and new code created by the OpenXRay team and contributors are released under the following licence:
-
 MIT License
 
 Copyright © 2014-2025 OpenXRay and contributors
