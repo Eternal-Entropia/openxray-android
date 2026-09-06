@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#121316</color>
+    <color name="bg_card">#1B1D22</color>
+    <color name="bg_card_border">#2C3038</color>
+    <color name="bg_input">#15171B</color>
+    <color name="amber_primary">#FFB300</color>
+    <color name="amber_dark">#E65100</color>
+    <color name="status_green">#43A047</color>
+    <color name="status_red">#E53935</color>
+    <color name="text_main">#ECEFF1</color>
+    <color name="text_muted">#90A4AE</color>
+</resources>

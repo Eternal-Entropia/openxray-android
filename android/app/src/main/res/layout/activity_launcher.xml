@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark"
+    android:fillViewport="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OPENXRAY"
+                android:textColor="@color/amber_primary"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Port by Eternal Entropia. Alpha v1"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Two Columns Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <!-- Left Column -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:orientation="vertical">
+
+                <!-- Card 1: Game Directory -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_bg"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GAME ASSETS PATH"
+                        android:textColor="@color/amber_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <EditText
+                            android:id="@+id/edit_game_path"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/edittext_bg"
+                            android:hint="/sdcard/OpenXRay"
+                            android:textColor="@color/text_main"
+                            android:textColorHint="@color/text_muted"
+                            android:textSize="13sp"
+                            android:paddingHorizontal="10dp"
+                            android:singleLine="true" />
+
+                        <Button
+                            android:id="@+id/btn_browse_path"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/btn_secondary"
+                            android:text="BROWSE"
+                            android:textColor="@color/text_main"
+                            android:textSize="11sp"
+                            android:paddingHorizontal="10dp" />
+
+                        <Button
+                            android:id="@+id/btn_check_path"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/btn_secondary"
+                            android:text="CHECK"
+                            android:textColor="@color/text_main"
+                            android:textSize="11sp"
+                            android:paddingHorizontal="10dp" />
+
+                        <Button
+                            android:id="@+id/btn_view_logs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/btn_secondary"
+                            android:text="LOGS"
+                            android:textColor="@color/amber_primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:paddingHorizontal="10dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/text_path_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Checking for fsgame.ltx..."
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Card 2: Game Options & Arguments -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_bg"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GAME MODE &amp; OPTIONS"
+                        android:textColor="@color/amber_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <RadioGroup
+                        android:id="@+id/radiogroup_gamemode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <RadioButton
+                            android:id="@+id/radio_soc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shadow of Chernobyl (-soc)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="true"
+                            android:layout_marginEnd="12dp" />
+
+                        <RadioButton
+                            android:id="@+id/radio_cs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Clear Sky (-cs)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:layout_marginEnd="12dp" />
+
+                        <RadioButton
+                            android:id="@+id/radio_cop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Call of Pripyat (-cop)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp" />
+                    </RadioGroup>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <CheckBox
+                            android:id="@+id/check_nointro"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Skip intro (-nointro)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="true"
+                            android:layout_marginEnd="12dp" />
+
+                        <CheckBox
+                            android:id="@+id/check_rgl"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="OpenGL (-rgl)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="true"
+                            android:layout_marginEnd="12dp" />
+
+                        <CheckBox
+                            android:id="@+id/check_nosound"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No sound (-nosound)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <CheckBox
+                            android:id="@+id/check_noshadows"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No shadows (-noshadows)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="false"
+                            android:layout_marginEnd="12dp" />
+
+                        <CheckBox
+                            android:id="@+id/check_dlights"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dynamic light"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="true"
+                            android:layout_marginEnd="12dp" />
+
+                        <CheckBox
+                            android:id="@+id/check_no_occq"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No occlusion (-no_occq)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="true" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Screen resolution:"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        android:layout_marginBottom="4dp" />
+
+                    <Spinner
+                        android:id="@+id/spinner_resolution"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:background="@drawable/edittext_bg"
+                        android:paddingHorizontal="8dp"
+                        android:layout_marginBottom="10dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Additional arguments:"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        android:layout_marginBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/edit_custom_args"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:background="@drawable/edittext_bg"
+                        android:hint="e.g. -noprefetch -dbg"
+                        android:textColor="@color/text_main"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="12sp"
+                        android:paddingHorizontal="10dp"
+                        android:singleLine="true" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Right Column -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <!-- Card 3: Touch Controls Settings -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_bg"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOUCH CONTROLS"
+                        android:textColor="@color/amber_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="10dp" />
+
+                    <!-- Sensitivity Slider -->
+                    <TextView
+                        android:id="@+id/label_look_sens"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Camera sensitivity: 1.0x"
+                        android:textColor="@color/text_main"
+                        android:textSize="12sp" />
+
+                    <SeekBar
+                        android:id="@+id/seek_look_sens"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="30"
+                        android:progress="10"
+                        android:layout_marginBottom="10dp" />
+
+                    <!-- Opacity Slider -->
+                    <TextView
+                        android:id="@+id/label_touch_opacity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Button opacity: 60%"
+                        android:textColor="@color/text_main"
+                        android:textSize="12sp" />
+
+                    <SeekBar
+                        android:id="@+id/seek_touch_opacity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"
+                        android:progress="60"
+                        android:layout_marginBottom="10dp" />
+
+                    <!-- Scale Slider -->
+                    <TextView
+                        android:id="@+id/label_touch_scale"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Button size: 100%"
+                        android:textColor="@color/text_main"
+                        android:textSize="12sp" />
+
+                    <SeekBar
+                        android:id="@+id/seek_touch_scale"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="150"
+                        android:progress="100" />
+                </LinearLayout>
+
+                <!-- Card 4: Launch Action -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_bg"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NEW GAME DIFFICULTY"
+                        android:textColor="@color/amber_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <RadioGroup
+                        android:id="@+id/radiogroup_difficulty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <RadioButton
+                            android:id="@+id/radio_diff_novice"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Novice"
+                            android:textColor="@color/text_main"
+                            android:textSize="11sp"
+                            android:checked="true" />
+
+                        <RadioButton
+                            android:id="@+id/radio_diff_stalker"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Stalker"
+                            android:textColor="@color/text_main"
+                            android:textSize="11sp" />
+
+                        <RadioButton
+                            android:id="@+id/radio_diff_veteran"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Veteran"
+                            android:textColor="@color/text_main"
+                            android:textSize="11sp" />
+
+                        <RadioButton
+                            android:id="@+id/radio_diff_master"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Master"
+                            android:textColor="@color/text_main"
+                            android:textSize="11sp" />
+                    </RadioGroup>
+
+                    <Button
+                        android:id="@+id/btn_start_new_game"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/btn_launch_new"
+                        android:text="★ START NEW GAME"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05"
+                        android:layout_marginBottom="8dp" />
+
+                    <Button
+                        android:id="@+id/btn_start_game"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:background="@drawable/btn_launch"
+                        android:text="▶ MAIN MENU"
+                        android:textColor="#000000"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="8dp"
+                        android:text="«Start New Game» launches directly into gameplay without main menu"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Disclaimer Footer -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="6dp"
+            android:gravity="center"
+            android:text="The author is not affiliated with GSC Game World in any way.&#10;Distributed under the MIT License."
+            android:textColor="@color/text_muted"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+</ScrollView>

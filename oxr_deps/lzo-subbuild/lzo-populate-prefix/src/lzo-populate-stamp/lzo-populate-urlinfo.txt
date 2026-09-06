@@ -1,0 +1,3 @@
+repository='external project URL'
+module='https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz'
+tag=''

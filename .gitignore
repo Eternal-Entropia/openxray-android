@@ -1,0 +1,147 @@
+# ==============================================================================
+# Git Ignore for OpenXRay (Windows, Linux, Android)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Operating System Files
+# ------------------------------------------------------------------------------
+[Tt]humbs.db
+[Ee]hthumbs.db
+[Dd]esktop.ini
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# ------------------------------------------------------------------------------
+# IDEs and Editors
+# ------------------------------------------------------------------------------
+# Visual Studio
+.vs/
+*.user
+*.userosv
+*.user.props
+*.suo
+*.su
+*.sln.docstates
+*.opensdf
+*.sdf
+*.VC.opendb
+*.VC.db
+*.PVS-Studio.*
+*.nvuser
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+
+# JetBrains (CLion / Android Studio / IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code (except settings/launch templates if needed)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ------------------------------------------------------------------------------
+# C / C++ Build Artifacts & Binaries
+# ------------------------------------------------------------------------------
+[Bb]in/
+[Bb]uild*/
+[Ll]ib/
+x64/
+x86/
+arm64/
+arm64-v8a/
+armeabi-v7a/
+
+# Object files and libraries
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.dylib
+*.exe
+*.exp
+*.ilk
+*.pdb
+*.ipch
+*.idb
+*.tlog
+
+# Project-specific intermediate build tools
+minilua.exe
+minilua.obj
+buildvm.exe
+buildvm_*.obj
+buildvm_arch.h
+buildvm_err.txt
+nuget.exe
+
+# ------------------------------------------------------------------------------
+# CMake & Ninja
+# ------------------------------------------------------------------------------
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+.ninja_deps
+.ninja_log
+*.ninja
+
+# ------------------------------------------------------------------------------
+# Android Build System (Gradle / NDK)
+# ------------------------------------------------------------------------------
+.gradle/
+android/.gradle/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/captures/
+*.apk
+*.ap_
+*.aab
+*.dex
+output.json
+
+# ------------------------------------------------------------------------------
+# S.T.A.L.K.E.R. Runtime & Temporary Files
+# ------------------------------------------------------------------------------
+_appdata_/
+appdata/
+savedgames/
+logs/
+screenshots/
+*.log
+*.log.bkp
+*.bak
+*.tmp
+
+# ------------------------------------------------------------------------------
+# Documentation & Doxygen
+# ------------------------------------------------------------------------------
+doc/doxygen/html/*
+doc/doxygen/latex/*
+
+# ------------------------------------------------------------------------------
+# Local Backups & Scratch
+# ------------------------------------------------------------------------------
+oldsrc/
+backup/
+scratch/
