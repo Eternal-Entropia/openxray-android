@@ -74,6 +74,8 @@ public class LauncherActivity extends AppCompatActivity {
     private TextView mLabelTouchScale;
     private SeekBar mSeekTouchScale;
 
+    private Button mBtnEditTouchLayout;
+
     private RadioButton mRadioDiffNovice;
     private RadioButton mRadioDiffStalker;
     private RadioButton mRadioDiffVeteran;
@@ -137,6 +139,15 @@ public class LauncherActivity extends AppCompatActivity {
 
         mLabelTouchScale = findViewById(R.id.label_touch_scale);
         mSeekTouchScale = findViewById(R.id.seek_touch_scale);
+
+        mBtnEditTouchLayout = findViewById(R.id.btn_edit_touch_layout);
+
+        if (mBtnEditTouchLayout != null) {
+            mBtnEditTouchLayout.setOnClickListener(v -> {
+                Intent intent = new Intent(this, ControlLayoutEditorActivity.class);
+                startActivity(intent);
+            });
+        }
 
         mBtnStartGame = findViewById(R.id.btn_start_game);
 
@@ -611,11 +622,27 @@ public class LauncherActivity extends AppCompatActivity {
             boolean hasQuickSave = false;
             boolean hasQuickLoad = false;
             boolean hasQuit = false;
+            boolean hasMedkit = false;
+            boolean hasBandage = false;
+            boolean hasLookoutL = false;
+            boolean hasLookoutR = false;
+            boolean hasWpn1 = false, hasWpn2 = false, hasWpn3 = false, hasWpn4 = false, hasWpn5 = false, hasWpn6 = false;
+
             for (String l : lines) {
                 String tl = l.trim();
                 if (tl.startsWith("bind quick_save ") || tl.startsWith("bind_sec quick_save ")) hasQuickSave = true;
                 if (tl.startsWith("bind quick_load ") || tl.startsWith("bind_sec quick_load ")) hasQuickLoad = true;
                 if (tl.startsWith("bind quit ") || tl.startsWith("bind_sec quit ")) hasQuit = true;
+                if (tl.startsWith("bind use_medkit ") || tl.startsWith("bind_sec use_medkit ")) hasMedkit = true;
+                if (tl.startsWith("bind use_bandage ") || tl.startsWith("bind_sec use_bandage ")) hasBandage = true;
+                if (tl.startsWith("bind llookout ") || tl.startsWith("bind_sec llookout ")) hasLookoutL = true;
+                if (tl.startsWith("bind rlookout ") || tl.startsWith("bind_sec rlookout ")) hasLookoutR = true;
+                if (tl.startsWith("bind wpn_1 ") || tl.startsWith("bind_sec wpn_1 ")) hasWpn1 = true;
+                if (tl.startsWith("bind wpn_2 ") || tl.startsWith("bind_sec wpn_2 ")) hasWpn2 = true;
+                if (tl.startsWith("bind wpn_3 ") || tl.startsWith("bind_sec wpn_3 ")) hasWpn3 = true;
+                if (tl.startsWith("bind wpn_4 ") || tl.startsWith("bind_sec wpn_4 ")) hasWpn4 = true;
+                if (tl.startsWith("bind wpn_5 ") || tl.startsWith("bind_sec wpn_5 ")) hasWpn5 = true;
+                if (tl.startsWith("bind wpn_6 ") || tl.startsWith("bind_sec wpn_6 ")) hasWpn6 = true;
             }
             if (!hasQuickSave) {
                 lines.add("bind quick_save kF6");
@@ -628,6 +655,24 @@ public class LauncherActivity extends AppCompatActivity {
             if (!hasQuit) {
                 lines.add("bind quit kESCAPE");
             }
+            if (!hasMedkit) {
+                lines.add("bind use_medkit kLBRACKET");
+            }
+            if (!hasBandage) {
+                lines.add("bind use_bandage kRBRACKET");
+            }
+            if (!hasLookoutL) {
+                lines.add("bind llookout kQ");
+            }
+            if (!hasLookoutR) {
+                lines.add("bind rlookout kE");
+            }
+            if (!hasWpn1) lines.add("bind wpn_1 k1");
+            if (!hasWpn2) lines.add("bind wpn_2 k2");
+            if (!hasWpn3) lines.add("bind wpn_3 k3");
+            if (!hasWpn4) lines.add("bind wpn_4 k4");
+            if (!hasWpn5) lines.add("bind wpn_5 k5");
+            if (!hasWpn6) lines.add("bind wpn_6 k6");
 
             try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(targetFile))) {
                 for (String l : lines) {

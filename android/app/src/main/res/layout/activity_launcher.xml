@@ -372,7 +372,20 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:max="150"
-                        android:progress="100" />
+                        android:progress="100"
+                        android:layout_marginBottom="14dp" />
+
+                    <!-- Edit Controls Layout Button -->
+                    <Button
+                        android:id="@+id/btn_edit_touch_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:background="@drawable/btn_secondary"
+                        android:text="✏ EDIT CONTROLS LAYOUT"
+                        android:textColor="@color/amber_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05" />
                 </LinearLayout>
 
                 <!-- Card 4: Launch Action -->

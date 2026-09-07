@@ -245,6 +245,10 @@ public class OpenXRayActivity extends SDLActivity {
             }
             AppLog.i("FileSystem", "Extracting assets to: " + new File(dir, "gamedata").getAbsolutePath());
             extractAssetFolder("gamedata", new File(dir, "gamedata"));
+            File targetFsgame = new File(dir, "fsgame.ltx");
+            if (!targetFsgame.exists()) {
+                extractAssetFolder("fsgame.ltx", targetFsgame);
+            }
             AppLog.i("FileSystem", "Asset extraction finished.");
         } catch (Exception e) {
             AppLog.e("FileSystem", "Error creating game directories / extracting assets: " + e.getMessage(), e);

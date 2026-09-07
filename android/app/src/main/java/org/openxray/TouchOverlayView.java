@@ -18,29 +18,59 @@ import java.util.List;
 
 public class TouchOverlayView extends View {
 
+    public static final int TYPE_DEFAULT = 0;
+    public static final int TYPE_LMB = 1;
+    public static final int TYPE_RMB = 2;
+    public static final int TYPE_MEDKIT = 3;
+    public static final int TYPE_BANDAGE = 4;
+    public static final int TYPE_QE = 5;
+    public static final int TYPE_WEAPON = 6;
+
     public static class TouchButton {
+        public String id;
         public String label;
         public int keyCode;
         public boolean isMouseLeft;
         public boolean isMouseRight;
+        public int buttonType = TYPE_DEFAULT;
         public RectF bounds;
+        public float cx;
+        public float cy;
+        public float radius;
         public boolean isPressed;
         public int pointerId = -1;
 
-        public TouchButton(String label, int keyCode, float x, float y, float radius) {
+        public TouchButton(String id, String label, int keyCode, float x, float y, float radius, int buttonType) {
+            this.id = id;
             this.label = label;
             this.keyCode = keyCode;
+            this.cx = x;
+            this.cy = y;
+            this.radius = radius;
+            this.buttonType = buttonType;
             this.bounds = new RectF(x - radius, y - radius, x + radius, y + radius);
         }
 
-        public TouchButton(String label, boolean isLeft, float x, float y, float radius) {
+        public TouchButton(String id, String label, boolean isLeft, float x, float y, float radius) {
+            this.id = id;
             this.label = label;
             if (isLeft) {
                 this.isMouseLeft = true;
+                this.buttonType = TYPE_LMB;
             } else {
                 this.isMouseRight = true;
+                this.buttonType = TYPE_RMB;
             }
+            this.cx = x;
+            this.cy = y;
+            this.radius = radius;
             this.bounds = new RectF(x - radius, y - radius, x + radius, y + radius);
+        }
+
+        public void setCenter(float x, float y) {
+            this.cx = x;
+            this.cy = y;
+            this.bounds.set(x - radius, y - radius, x + radius, y + radius);
         }
 
         public boolean contains(float x, float y) {
@@ -68,6 +98,22 @@ public class TouchOverlayView extends View {
     private final Paint mPkmPaint;
     private final Paint mPkmStrokePaint;
     private final Paint mPkmPressedPaint;
+
+    private final Paint mMedkitPaint;
+    private final Paint mMedkitStrokePaint;
+    private final Paint mMedkitPressedPaint;
+
+    private final Paint mBandagePaint;
+    private final Paint mBandageStrokePaint;
+    private final Paint mBandagePressedPaint;
+
+    private final Paint mQePaint;
+    private final Paint mQeStrokePaint;
+    private final Paint mQePressedPaint;
+
+    private final Paint mWeaponPaint;
+    private final Paint mWeaponStrokePaint;
+    private final Paint mWeaponPressedPaint;
 
     private final Paint mTextPaint;
 
@@ -114,35 +160,68 @@ public class TouchOverlayView extends View {
         mThumbDotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mThumbDotPaint.setStyle(Paint.Style.FILL);
 
+        // Default buttons
         mButtonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mButtonPaint.setStyle(Paint.Style.FILL);
-
         mButtonStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mButtonStrokePaint.setStyle(Paint.Style.STROKE);
         mButtonStrokePaint.setStrokeWidth(3);
-
         mButtonPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mButtonPressedPaint.setStyle(Paint.Style.FILL);
 
+        // LMB
         mLkmPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLkmPaint.setStyle(Paint.Style.FILL);
-
         mLkmStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLkmStrokePaint.setStyle(Paint.Style.STROKE);
         mLkmStrokePaint.setStrokeWidth(5);
-
         mLkmPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLkmPressedPaint.setStyle(Paint.Style.FILL);
 
+        // RMB
         mPkmPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPkmPaint.setStyle(Paint.Style.FILL);
-
         mPkmStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPkmStrokePaint.setStyle(Paint.Style.STROKE);
         mPkmStrokePaint.setStrokeWidth(5);
-
         mPkmPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPkmPressedPaint.setStyle(Paint.Style.FILL);
+
+        // Medkit (Red/Coral)
+        mMedkitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mMedkitPaint.setStyle(Paint.Style.FILL);
+        mMedkitStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mMedkitStrokePaint.setStyle(Paint.Style.STROKE);
+        mMedkitStrokePaint.setStrokeWidth(4);
+        mMedkitPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mMedkitPressedPaint.setStyle(Paint.Style.FILL);
+
+        // Bandage (Teal/Cyan)
+        mBandagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBandagePaint.setStyle(Paint.Style.FILL);
+        mBandageStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBandageStrokePaint.setStyle(Paint.Style.STROKE);
+        mBandageStrokePaint.setStrokeWidth(4);
+        mBandagePressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBandagePressedPaint.setStyle(Paint.Style.FILL);
+
+        // Q/E (Purple/Violet)
+        mQePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mQePaint.setStyle(Paint.Style.FILL);
+        mQeStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mQeStrokePaint.setStyle(Paint.Style.STROKE);
+        mQeStrokePaint.setStrokeWidth(4);
+        mQePressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mQePressedPaint.setStyle(Paint.Style.FILL);
+
+        // Weapon (Amber/Charcoal)
+        mWeaponPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mWeaponPaint.setStyle(Paint.Style.FILL);
+        mWeaponStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mWeaponStrokePaint.setStyle(Paint.Style.STROKE);
+        mWeaponStrokePaint.setStrokeWidth(3);
+        mWeaponPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mWeaponPressedPaint.setStyle(Paint.Style.FILL);
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
@@ -173,6 +252,26 @@ public class TouchOverlayView extends View {
         mPkmStrokePaint.setColor(Color.argb((int) (a * 0.95f), 0, 195, 225));
         mPkmPressedPaint.setColor(Color.argb((int) (a * 0.95f), 0, 180, 220));
 
+        // Medkit (Crimson Red / Salmon)
+        mMedkitPaint.setColor(Color.argb((int) (a * 0.65f), 75, 15, 15));
+        mMedkitStrokePaint.setColor(Color.argb((int) (a * 0.95f), 255, 65, 65));
+        mMedkitPressedPaint.setColor(Color.argb((int) (a * 0.95f), 230, 30, 30));
+
+        // Bandage (Teal / Cyan)
+        mBandagePaint.setColor(Color.argb((int) (a * 0.65f), 15, 60, 55));
+        mBandageStrokePaint.setColor(Color.argb((int) (a * 0.95f), 45, 215, 180));
+        mBandagePressedPaint.setColor(Color.argb((int) (a * 0.95f), 20, 190, 155));
+
+        // Q/E (Purple / Indigo)
+        mQePaint.setColor(Color.argb((int) (a * 0.60f), 48, 25, 65));
+        mQeStrokePaint.setColor(Color.argb((int) (a * 0.95f), 180, 105, 245));
+        mQePressedPaint.setColor(Color.argb((int) (a * 0.95f), 160, 80, 230));
+
+        // Weapons (Deep Charcoal / Amber Border)
+        mWeaponPaint.setColor(Color.argb((int) (a * 0.55f), 24, 24, 28));
+        mWeaponStrokePaint.setColor(Color.argb((int) (a * 0.85f), 240, 170, 40));
+        mWeaponPressedPaint.setColor(Color.argb((int) (a * 0.90f), 220, 140, 20));
+
         mTextPaint.setColor(Color.argb((int) (a * 0.95f), 255, 255, 255));
     }
 
@@ -200,47 +299,82 @@ public class TouchOverlayView extends View {
         invalidate();
     }
 
+    public void reloadLayout() {
+        if (getWidth() > 0 && getHeight() > 0) {
+            initLayout(getWidth(), getHeight());
+            invalidate();
+        }
+    }
+
     private void initLayout(int w, int h) {
         mButtons.clear();
 
-        mJoyBaseX = w * 0.16f;
-        mJoyBaseY = h * 0.72f;
+        TouchLayoutConfig.LayoutData layout = TouchLayoutConfig.loadLayout(getContext());
+
+        mJoyBaseX = layout.joyRelX * w;
+        mJoyBaseY = layout.joyRelY * h;
         mJoyThumbX = mJoyBaseX;
         mJoyThumbY = mJoyBaseY;
-        mJoyRadius = h * 0.16f * mButtonScale;
-
-        float btnRadius = h * 0.082f * mButtonScale;
-        float smallBtnRadius = h * 0.058f * mButtonScale;
+        mJoyRadius = h * layout.joyRelRadius * mButtonScale;
 
         // 1. Right Side Primary Action Buttons (LMB and RMB)
-        // Main LMB (Primary fire / click - bottom-right)
-        mButtons.add(new TouchButton("LMB", true, w - btnRadius * 2.2f, h - btnRadius * 2.2f, btnRadius * 1.35f));
-        // Main RMB (Aim / secondary click - next to LMB)
-        mButtons.add(new TouchButton("RMB", false, w - btnRadius * 4.6f, h - btnRadius * 1.9f, btnRadius * 1.15f));
+        addButtonFromConfig(layout, "lmb_main", "LMB", true);
+        addButtonFromConfig(layout, "rmb_main", "RMB", false);
 
         // 2. Additional Left-Hand LMB (Above movement joystick for dual-thumb / claw firing & clicking)
-        mButtons.add(new TouchButton("LMB", true, mJoyBaseX, mJoyBaseY - mJoyRadius - smallBtnRadius * 1.7f, smallBtnRadius * 1.30f));
+        addButtonFromConfig(layout, "lmb_left", "LMB", true);
 
         // 3. Gameplay Buttons (Right Side)
-        mButtons.add(new TouchButton("R", KeyEvent.KEYCODE_R, w - btnRadius * 2.0f, h - btnRadius * 4.6f, btnRadius * 0.90f));
-        mButtons.add(new TouchButton("F", KeyEvent.KEYCODE_F, w - btnRadius * 4.0f, h - btnRadius * 3.8f, btnRadius * 0.90f));
-        mButtons.add(new TouchButton("JUMP", KeyEvent.KEYCODE_SPACE, w - btnRadius * 1.8f, h - btnRadius * 6.8f, btnRadius * 0.95f));
-        mButtons.add(new TouchButton("CROUCH", KeyEvent.KEYCODE_CTRL_LEFT, w - btnRadius * 3.8f, h - btnRadius * 6.0f, btnRadius * 0.95f));
-        mButtons.add(new TouchButton("SHIFT", KeyEvent.KEYCODE_SHIFT_LEFT, w - btnRadius * 5.8f, h - btnRadius * 6.0f, btnRadius * 0.95f));
+        addButtonFromConfig(layout, "r", "R", KeyEvent.KEYCODE_R, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "f", "F", KeyEvent.KEYCODE_F, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "jump", "JUMP", KeyEvent.KEYCODE_SPACE, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "crouch", "CROUCH", KeyEvent.KEYCODE_CTRL_LEFT, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "shift", "SHIFT", KeyEvent.KEYCODE_SHIFT_LEFT, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "sprint", "SPRINT", KeyEvent.KEYCODE_X, TYPE_DEFAULT);
 
-        // Sprint (X - near joystick)
-        mButtons.add(new TouchButton("SPRINT", KeyEvent.KEYCODE_X, w * 0.32f, h * 0.82f, smallBtnRadius * 1.15f));
+        // 4. Q and E (Camera Turn / Lean)
+        addButtonFromConfig(layout, "q", "Q", KeyEvent.KEYCODE_Q, TYPE_QE);
+        addButtonFromConfig(layout, "e", "E", KeyEvent.KEYCODE_E, TYPE_QE);
 
-        // 4. Top Bar System / UI Buttons
-        float topY = smallBtnRadius * 1.6f;
-        mButtons.add(new TouchButton("ESC", KeyEvent.KEYCODE_ESCAPE, smallBtnRadius * 1.8f, topY, smallBtnRadius));
-        mButtons.add(new TouchButton("INV", KeyEvent.KEYCODE_I, w * 0.35f, topY, smallBtnRadius));
-        mButtons.add(new TouchButton("PDA", KeyEvent.KEYCODE_P, w * 0.48f, topY, smallBtnRadius));
-        mButtons.add(new TouchButton("TORCH", KeyEvent.KEYCODE_L, w * 0.61f, topY, smallBtnRadius));
-        mButtons.add(new TouchButton("QSAVE", KeyEvent.KEYCODE_F6, w - smallBtnRadius * 4.4f, topY, smallBtnRadius));
-        mButtons.add(new TouchButton("QLOAD", KeyEvent.KEYCODE_F7, w - smallBtnRadius * 1.8f, topY, smallBtnRadius));
+        // 5. Quick Medical Items (Medkit & Bandage)
+        addButtonFromConfig(layout, "medkit", "AID KIT", KeyEvent.KEYCODE_LEFT_BRACKET, TYPE_MEDKIT);
+        addButtonFromConfig(layout, "bandage", "BAND", KeyEvent.KEYCODE_RIGHT_BRACKET, TYPE_BANDAGE);
+
+        // 6. Weapon Selection 1-6 (Bottom Center)
+        addButtonFromConfig(layout, "wpn_1", "1", KeyEvent.KEYCODE_1, TYPE_WEAPON);
+        addButtonFromConfig(layout, "wpn_2", "2", KeyEvent.KEYCODE_2, TYPE_WEAPON);
+        addButtonFromConfig(layout, "wpn_3", "3", KeyEvent.KEYCODE_3, TYPE_WEAPON);
+        addButtonFromConfig(layout, "wpn_4", "4", KeyEvent.KEYCODE_4, TYPE_WEAPON);
+        addButtonFromConfig(layout, "wpn_5", "5", KeyEvent.KEYCODE_5, TYPE_WEAPON);
+        addButtonFromConfig(layout, "wpn_6", "6", KeyEvent.KEYCODE_6, TYPE_WEAPON);
+
+        // 7. Top Bar System / UI Buttons
+        addButtonFromConfig(layout, "esc", "ESC", KeyEvent.KEYCODE_ESCAPE, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "inv", "INV", KeyEvent.KEYCODE_I, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "pda", "PDA", KeyEvent.KEYCODE_P, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "torch", "TORCH", KeyEvent.KEYCODE_L, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "qsave", "QSAVE", KeyEvent.KEYCODE_F6, TYPE_DEFAULT);
+        addButtonFromConfig(layout, "qload", "QLOAD", KeyEvent.KEYCODE_F7, TYPE_DEFAULT);
 
         mInitialized = true;
+    }
+
+    private void addButtonFromConfig(TouchLayoutConfig.LayoutData layout, String id, String label, boolean isLeft) {
+        TouchLayoutConfig.ButtonPos pos = layout.buttons.get(id);
+        if (pos == null) return;
+        float x = pos.relX * getWidth();
+        float y = pos.relY * getHeight();
+        float r = pos.relRadius * getHeight() * mButtonScale;
+        mButtons.add(new TouchButton(id, label, isLeft, x, y, r));
+    }
+
+    private void addButtonFromConfig(TouchLayoutConfig.LayoutData layout, String id, String label, int keyCode, int type) {
+        TouchLayoutConfig.ButtonPos pos = layout.buttons.get(id);
+        if (pos == null) return;
+        float x = pos.relX * getWidth();
+        float y = pos.relY * getHeight();
+        float r = pos.relRadius * getHeight() * mButtonScale;
+        mButtons.add(new TouchButton(id, label, keyCode, x, y, r, type));
     }
 
     @Override
@@ -274,8 +408,9 @@ public class TouchOverlayView extends View {
                     break;
                 }
 
-                // 2. Check Joystick area (Left 40% of screen, bottom 62%)
-                if (x < getWidth() * 0.40f && y > getHeight() * 0.38f && mJoyPointerId == -1) {
+                // 2. Check Joystick area (Near joystick base)
+                float joyDist = (float) Math.hypot(x - mJoyBaseX, y - mJoyBaseY);
+                if ((joyDist <= mJoyRadius * 1.6f || (x < getWidth() * 0.35f && y > getHeight() * 0.45f)) && mJoyPointerId == -1) {
                     mJoyPointerId = pointerId;
                     mJoyActive = true;
                     updateJoystick(x, y);
@@ -318,7 +453,7 @@ public class TouchOverlayView extends View {
                     // Update button dragging (with margin slop so holding while moving doesn't accidentally cancel)
                     for (TouchButton btn : mButtons) {
                         if (btn.pointerId == pId) {
-                            if (!btn.containsWithMargin(x, y, 25.0f)) {
+                            if (!btn.containsWithMargin(x, y, 28.0f)) {
                                 btn.isPressed = false;
                                 btn.pointerId = -1;
                                 sendButtonEvent(btn, false);
@@ -462,16 +597,16 @@ public class TouchOverlayView extends View {
         } else {
             if (pressed) {
                 SDLActivity.onNativeKeyDown(btn.keyCode);
-                if ("QSAVE".equals(btn.label)) {
+                if ("qsave".equals(btn.id)) {
                     SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_F5);
-                } else if ("QLOAD".equals(btn.label)) {
+                } else if ("qload".equals(btn.id)) {
                     SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_F9);
                 }
             } else {
                 SDLActivity.onNativeKeyUp(btn.keyCode);
-                if ("QSAVE".equals(btn.label)) {
+                if ("qsave".equals(btn.id)) {
                     SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_F5);
-                } else if ("QLOAD".equals(btn.label)) {
+                } else if ("qload".equals(btn.id)) {
                     SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_F9);
                 }
             }
@@ -495,15 +630,35 @@ public class TouchOverlayView extends View {
             Paint fillPaint;
             Paint strokePaint;
 
-            if (btn.isMouseLeft) {
-                fillPaint = btn.isPressed ? mLkmPressedPaint : mLkmPaint;
-                strokePaint = mLkmStrokePaint;
-            } else if (btn.isMouseRight) {
-                fillPaint = btn.isPressed ? mPkmPressedPaint : mPkmPaint;
-                strokePaint = mPkmStrokePaint;
-            } else {
-                fillPaint = btn.isPressed ? mButtonPressedPaint : mButtonPaint;
-                strokePaint = mButtonStrokePaint;
+            switch (btn.buttonType) {
+                case TYPE_LMB:
+                    fillPaint = btn.isPressed ? mLkmPressedPaint : mLkmPaint;
+                    strokePaint = mLkmStrokePaint;
+                    break;
+                case TYPE_RMB:
+                    fillPaint = btn.isPressed ? mPkmPressedPaint : mPkmPaint;
+                    strokePaint = mPkmStrokePaint;
+                    break;
+                case TYPE_MEDKIT:
+                    fillPaint = btn.isPressed ? mMedkitPressedPaint : mMedkitPaint;
+                    strokePaint = mMedkitStrokePaint;
+                    break;
+                case TYPE_BANDAGE:
+                    fillPaint = btn.isPressed ? mBandagePressedPaint : mBandagePaint;
+                    strokePaint = mBandageStrokePaint;
+                    break;
+                case TYPE_QE:
+                    fillPaint = btn.isPressed ? mQePressedPaint : mQePaint;
+                    strokePaint = mQeStrokePaint;
+                    break;
+                case TYPE_WEAPON:
+                    fillPaint = btn.isPressed ? mWeaponPressedPaint : mWeaponPaint;
+                    strokePaint = mWeaponStrokePaint;
+                    break;
+                default:
+                    fillPaint = btn.isPressed ? mButtonPressedPaint : mButtonPaint;
+                    strokePaint = mButtonStrokePaint;
+                    break;
             }
 
             // Fill
@@ -512,7 +667,7 @@ public class TouchOverlayView extends View {
             canvas.drawRoundRect(btn.bounds, cornerRadius, cornerRadius, strokePaint);
 
             // Text Label
-            float fontSize = btn.bounds.height() * (btn.label.length() > 4 ? 0.26f : (btn.label.length() > 2 ? 0.32f : 0.40f));
+            float fontSize = btn.bounds.height() * (btn.label.length() > 6 ? 0.22f : (btn.label.length() > 4 ? 0.26f : (btn.label.length() > 2 ? 0.32f : 0.40f)));
             mTextPaint.setTextSize(fontSize);
 
             float textY = btn.bounds.centerY() - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);

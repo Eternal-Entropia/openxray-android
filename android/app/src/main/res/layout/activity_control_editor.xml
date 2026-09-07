@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark">
+
+    <!-- Interactive Canvas View -->
+    <org.openxray.ControlLayoutEditorView
+        android:id="@+id/editor_canvas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Top Action Bar Overlay -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="#DD121214"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CONTROLS LAYOUT EDITOR"
+                android:textColor="@color/amber_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Drag buttons or joystick to reposition. Tap Save when finished."
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_editor_reset"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/btn_secondary"
+            android:text="RESET DEFAULTS"
+            android:textColor="@color/text_main"
+            android:textSize="11sp"
+            android:paddingHorizontal="12dp" />
+
+        <Button
+            android:id="@+id/btn_editor_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/btn_secondary"
+            android:text="CANCEL"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            android:paddingHorizontal="12dp" />
+
+        <Button
+            android:id="@+id/btn_editor_save"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/btn_launch"
+            android:text="✓ SAVE &amp; APPLY"
+            android:textColor="#000000"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="16dp" />
+    </LinearLayout>
+
+</RelativeLayout>

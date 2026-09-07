@@ -44,6 +44,14 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.OpenXRay.Fullscreen">
         </activity>
+
+        <activity
+            android:name=".ControlLayoutEditorActivity"
+            android:exported="false"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.OpenXRay.Fullscreen">
+        </activity>
     </application>
 
 </manifest>
