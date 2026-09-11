@@ -90,34 +90,37 @@ void CTexture::apply_theora(CBackend& cmd_list, u32 dwStage)
 
     if (pTheora->Update(m_play_time != 0xFFFFFFFF ? m_play_time : Device.dwTimeContinual))
     {
-        u32* pBits;
         u32 _w = pTheora->Width(true);
         u32 _h = pTheora->Height(true);
+        int _pos = 0;
+
+#if defined(XR_PLATFORM_ANDROID)
+        // Direct CPU upload avoiding Adreno driver logcat spam ("CPU path taken to copy PBO ...") and extra copies
+        thread_local xr_vector<u32> s_theora_cpu_buffer;
+        if (s_theora_cpu_buffer.size() < _w * _h)
+            s_theora_cpu_buffer.resize(_w * _h);
+
+        pTheora->DecompressFrame(s_theora_cpu_buffer.data(), 0, _pos);
+        CHK_GL(glTexSubImage2D(desc, 0, 0, 0, _w, _h, GL_RGBA, GL_UNSIGNED_BYTE, s_theora_cpu_buffer.data()));
+#else
+        u32* pBits;
 
         // Clear and map buffer for writing
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pBuffer);
         CHK_GL(glBufferData(GL_PIXEL_UNPACK_BUFFER, _w * _h * 4, nullptr, GL_STREAM_DRAW)); // Invalidate buffer
-#if defined(XR_PLATFORM_ANDROID)
-        CHK_GL(pBits = (u32*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, _w * _h * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
-#else
         CHK_GL(pBits = (u32*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
-#endif
 
         // Write to the buffer and copy it to the texture
-        int _pos = 0;
         if (pBits)
         {
             pTheora->DecompressFrame(pBits, 0, _pos);
             CHK_GL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+            CHK_GL(glTexSubImage2D(desc, 0, 0, 0, _w, _h, GL_BGRA, GL_UNSIGNED_BYTE, nullptr));
         }
-#if defined(XR_PLATFORM_ANDROID)
-        CHK_GL(glTexSubImage2D(desc, 0, 0, 0, _w, _h, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
-#else
-        CHK_GL(glTexSubImage2D(desc, 0, 0, 0, _w, _h, GL_BGRA, GL_UNSIGNED_BYTE, nullptr));
-#endif
 
         // Unmap the buffer to restore normal texture functionality
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#endif
     }
 };
 
@@ -220,10 +223,12 @@ void CTexture::Load()
 
             ClearGLErrors();
 
+#if !defined(XR_PLATFORM_ANDROID)
             glGenBuffers(1, &pBuffer);
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pBuffer);
             CHK_GL(glBufferData(GL_PIXEL_UNPACK_BUFFER, flags.MemoryUsage, nullptr, GL_STREAM_DRAW));
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#endif
 
             glGenTextures(1, &pTexture);
             glBindTexture(GL_TEXTURE_2D, pTexture);
@@ -235,6 +240,8 @@ void CTexture::Load()
             CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 #if defined(XR_PLATFORM_ANDROID)
             CHK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _w, _h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
+            CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE));
+            CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED));
 #else
             CHK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _w, _h, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr));
 #endif
@@ -359,7 +366,11 @@ void CTexture::Unload()
     }
 
     CHK_GL(glDeleteTextures(1, &pSurface));
-    CHK_GL(glDeleteBuffers(1, &pBuffer));
+    if (pBuffer)
+    {
+        CHK_GL(glDeleteBuffers(1, &pBuffer));
+        pBuffer = 0;
+    }
 
 #ifdef XR_PLATFORM_WINDOWS
     xr_delete(pAVI);

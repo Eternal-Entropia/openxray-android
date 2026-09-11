@@ -28,7 +28,16 @@ void CHWCaps::Update()
     geometry.dwRegisters = cnt;
     geometry.dwInstructions = 256;
     geometry.dwClipPlanes = _min(6, 15);
+    // NOTE: Android uses the GLES loader (gladLoadGLES2), which sets only the
+    // GLAD_GL_ES_VERSION_* flags. Checking the desktop GLAD_GL_VERSION_3_0 /
+    // GLAD_GL_ARB_texture_float here always yields false on Android, leaving
+    // bVTF disabled and the skybox textures unbound (black sky).
+    // GLES 3.0+ mandates >= 16 vertex texture units, so ES 3.0 implies VTF.
+#if defined(XR_PLATFORM_ANDROID)
+    geometry.bVTF = (GLAD_GL_ES_VERSION_3_0 || GLAD_GL_ES_VERSION_2_0) && !strstr(Core.Params, "-novtf");
+#else
     geometry.bVTF = (GLAD_GL_VERSION_3_0 || GLAD_GL_ARB_texture_float) && !strstr(Core.Params, "-novtf");
+#endif
 
     // ***************** PIXEL processing
     raster_major = 4;

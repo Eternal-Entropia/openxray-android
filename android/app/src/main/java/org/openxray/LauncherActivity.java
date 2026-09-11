@@ -55,11 +55,9 @@ public class LauncherActivity extends AppCompatActivity {
     private RadioButton mRadioCop;
 
     private CheckBox mCheckNoIntro;
-    private CheckBox mCheckRgl;
     private CheckBox mCheckNoSound;
     private CheckBox mCheckNoShadows;
     private CheckBox mCheckDLights;
-    private CheckBox mCheckNoOccq;
     private Spinner mSpinnerResolution;
     private java.util.List<ResolutionItem> mResolutionList = new java.util.ArrayList<>();
     private ArrayAdapter<ResolutionItem> mResolutionAdapter;
@@ -122,11 +120,9 @@ public class LauncherActivity extends AppCompatActivity {
         mRadioCop = findViewById(R.id.radio_cop);
 
         mCheckNoIntro = findViewById(R.id.check_nointro);
-        mCheckRgl = findViewById(R.id.check_rgl);
         mCheckNoSound = findViewById(R.id.check_nosound);
         mCheckNoShadows = findViewById(R.id.check_noshadows);
         mCheckDLights = findViewById(R.id.check_dlights);
-        mCheckNoOccq = findViewById(R.id.check_no_occq);
         mSpinnerResolution = findViewById(R.id.spinner_resolution);
         setupResolutionSpinner();
         mEditCustomArgs = findViewById(R.id.edit_custom_args);
@@ -215,12 +211,22 @@ public class LauncherActivity extends AppCompatActivity {
         else mRadioSoc.setChecked(true);
 
         mCheckNoIntro.setChecked(mPrefs.getBoolean("nointro", true));
-        mCheckRgl.setChecked(mPrefs.getBoolean("rgl", true));
         mCheckNoSound.setChecked(mPrefs.getBoolean("nosound", false));
         mCheckNoShadows.setChecked(mPrefs.getBoolean("noshadows", false));
         mCheckDLights.setChecked(mPrefs.getBoolean("dlights", true));
-        mCheckNoOccq.setChecked(mPrefs.getBoolean("no_occq", true));
-        mEditCustomArgs.setText(mPrefs.getString("custom_args", ""));
+
+        if (!mPrefs.getBoolean("custom_args_v2_initialized", false)) {
+            String customArgs = mPrefs.getString("custom_args", "");
+            if (customArgs.isEmpty()) {
+                customArgs = "-xclsx";
+            } else if (!customArgs.contains("-xclsx")) {
+                customArgs = (customArgs + " -xclsx").trim();
+            }
+            mEditCustomArgs.setText(customArgs);
+            mPrefs.edit().putBoolean("custom_args_v2_initialized", true).apply();
+        } else {
+            mEditCustomArgs.setText(mPrefs.getString("custom_args", "-xclsx"));
+        }
 
         int lookSens = mPrefs.getInt("look_sens", 10);
         mSeekLookSens.setProgress(lookSens);
@@ -270,11 +276,9 @@ public class LauncherActivity extends AppCompatActivity {
             .putString("game_mode", mode)
             .putString("difficulty", diff)
             .putBoolean("nointro", mCheckNoIntro.isChecked())
-            .putBoolean("rgl", mCheckRgl.isChecked())
             .putBoolean("nosound", mCheckNoSound.isChecked())
             .putBoolean("noshadows", mCheckNoShadows.isChecked())
             .putBoolean("dlights", mCheckDLights.isChecked())
-            .putBoolean("no_occq", mCheckNoOccq.isChecked())
             .putString("custom_args", mEditCustomArgs.getText().toString().trim())
             .putInt("look_sens", Math.max(5, mSeekLookSens.getProgress()))
             .putInt("touch_opacity", Math.max(20, mSeekTouchOpacity.getProgress()))
@@ -359,9 +363,8 @@ public class LauncherActivity extends AppCompatActivity {
             argsBuilder.append("-soc ");
         }
 
-        if (mCheckRgl.isChecked()) {
-            argsBuilder.append("-rgl ");
-        }
+        // OpenGL (-rgl) is always enabled
+        argsBuilder.append("-rgl ");
         if (mCheckNoIntro.isChecked()) {
             argsBuilder.append("-nointro ");
         }
@@ -373,9 +376,6 @@ public class LauncherActivity extends AppCompatActivity {
         }
         if (!mCheckDLights.isChecked()) {
             argsBuilder.append("-nodlights -sunstatic ");
-        }
-        if (mCheckNoOccq.isChecked()) {
-            argsBuilder.append("-no_occq ");
         }
 
         String customArgs = mEditCustomArgs.getText().toString().trim();

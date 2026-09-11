@@ -19,8 +19,13 @@ IC bool compare_safe(const luabind::object& o1, const luabind::object& o2)
 }
 
 #ifndef LUABIND_NO_EXCEPTIONS
-#define process_error \
-    catch (luabind::error&) { GEnv.ScriptEngine->print_output(GEnv.ScriptEngine->lua(), "", LUA_ERRRUN); }
+#define process_error                                                                      \
+    catch (const luabind::error& e)                                                        \
+    {                                                                                      \
+        Msg("! [CScriptCallbackEx] LUA ERROR: %s", e.what());                              \
+        GEnv.ScriptEngine->print_output(GEnv.ScriptEngine->lua(), "", LUA_ERRRUN);         \
+        FlushLog();                                                                        \
+    }
 #else
 #define process_error
 #endif
@@ -96,25 +101,27 @@ public:
         {
             try
             {
-                if (m_functor)
+                if (m_functor.is_valid())
                 {
-                    VERIFY(m_functor.is_valid());
-                    if (m_object)
+                    if (m_object.is_valid())
                     {
-                        VERIFY(m_object.is_valid());
                         return TResult(
                             luabind::call_function<TResult>(m_functor, m_object, std::forward<Args>(args)...));
                     }
                     return TResult(luabind::call_function<TResult>(m_functor, std::forward<Args>(args)...));
                 }
             }
-            process_error catch (std::exception&)
+            process_error catch (const std::exception& e)
             {
+                Msg("! [CScriptCallbackEx] std::exception: %s", e.what());
                 GEnv.ScriptEngine->print_output(GEnv.ScriptEngine->lua(), "", 1);
+                FlushLog();
             }
         }
         catch (...)
         {
+            Msg("! [CScriptCallbackEx] Unknown exception caught!");
+            FlushLog();
             const_cast<CScriptCallbackEx<TResult>*>(this)->clear();
         }
         return TResult(0);
@@ -127,83 +134,35 @@ public:
         {
             try
             {
-                if (m_functor)
+                if (m_functor.is_valid())
                 {
-                    VERIFY(m_functor.is_valid());
-                    if (m_object)
+                    if (m_object.is_valid())
                     {
-                        VERIFY(m_object.is_valid());
                         return TResult(
                             luabind::call_function<TResult>(m_functor, m_object, std::forward<Args>(args)...));
                     }
                     return TResult(luabind::call_function<TResult>(m_functor, std::forward<Args>(args)...));
                 }
+                else
+                {
+                    Msg("! [CScriptCallbackEx] functor is NOT valid in operator()!");
+                    FlushLog();
+                }
             }
-            process_error catch (std::exception&)
+            process_error catch (const std::exception& e)
             {
+                Msg("! [CScriptCallbackEx] std::exception: %s", e.what());
                 GEnv.ScriptEngine->print_output(GEnv.ScriptEngine->lua(), "", 1);
+                FlushLog();
             }
         }
         catch (...)
         {
+            Msg("! [CScriptCallbackEx] Unknown exception caught!");
+            FlushLog();
             const_cast<CScriptCallbackEx<TResult>*>(this)->clear();
         }
         return TResult(0);
     }
 };
 
-template <>
-template <typename... Args>
-void CScriptCallbackEx<void>::operator()(Args&&... args) const
-{
-    try
-    {
-        try
-        {
-            if (m_functor)
-            {
-                VERIFY(m_functor.is_valid());
-                if (m_object)
-                {
-                    VERIFY(m_object.is_valid());
-                    luabind::call_function<void>(m_functor, m_object, std::forward<Args>(args)...);
-                }
-                else
-                    luabind::call_function<void>(m_functor, std::forward<Args>(args)...);
-            }
-        }
-        process_error catch (std::exception&) { GEnv.ScriptEngine->print_output(GEnv.ScriptEngine->lua(), "", 1); }
-    }
-    catch (...)
-    {
-        const_cast<CScriptCallbackEx<void>*>(this)->clear();
-    }
-}
-
-template <>
-template <typename... Args>
-void CScriptCallbackEx<void>::operator()(Args&&... args)
-{
-    try
-    {
-        try
-        {
-            if (m_functor)
-            {
-                VERIFY(m_functor.is_valid());
-                if (m_object)
-                {
-                    VERIFY(m_object.is_valid());
-                    luabind::call_function<void>(m_functor, m_object, std::forward<Args>(args)...);
-                }
-                else
-                    luabind::call_function<void>(m_functor, std::forward<Args>(args)...);
-            }
-        }
-        process_error catch (std::exception&) { GEnv.ScriptEngine->print_output(GEnv.ScriptEngine->lua(), "", 1); }
-    }
-    catch (...)
-    {
-        const_cast<CScriptCallbackEx<void>*>(this)->clear();
-    }
-}

@@ -725,20 +725,15 @@ public:
     virtual void Execute(LPCSTR args)
     {
         Msg(">>> [CCC_ALifeLoadFrom] Execute called with args: '%s'", args ? args : "<null>");
+        FlushLog();
         string_path saved_game;
         strncpy_s(saved_game, sizeof(saved_game), args, MAX_PATH - 1);
-
-        if (!ai().get_alife())
-        {
-            Log("! ALife simulator has not been started yet");
-            Msg(">>> [CCC_ALifeLoadFrom] ABORT: ai().get_alife() is null!");
-            return;
-        }
 
         if (!xr_strlen(saved_game))
         {
             Log("! Specify file name!");
             Msg(">>> [CCC_ALifeLoadFrom] ABORT: saved_game is empty!");
+            FlushLog();
             return;
         }
 
@@ -746,22 +741,38 @@ public:
         bool valid = CSavedGameWrapper::valid_saved_game(saved_game);
         bool valid_name = valid_saved_game_name(saved_game);
         Msg(">>> [CCC_ALifeLoadFrom] '%s': exist=%d, valid=%d, valid_name=%d", saved_game, (int)exist, (int)valid, (int)valid_name);
+        FlushLog();
 
         if (!exist)
         {
             Msg("! Cannot find saved game %s", saved_game);
+            FlushLog();
             return;
         }
 
         if (!valid)
         {
             Msg("! Cannot load saved game %s, version mismatch or saved game is corrupted", saved_game);
+            FlushLog();
             return;
         }
 
         if (!valid_name)
         {
             Msg("! Cannot load saved game %s, invalid file name", saved_game);
+            FlushLog();
+            return;
+        }
+
+        xr_strcpy(g_last_saved_game, saved_game);
+
+        if (!ai().get_alife())
+        {
+            Msg(">>> [CCC_ALifeLoadFrom] alife() is not active, starting server with save: '%s'", saved_game);
+            FlushLog();
+            string4096 command;
+            xr_sprintf(command, "start server(%s/single/alife/load) client(localhost)", saved_game);
+            Console->Execute(command);
             return;
         }
 
@@ -793,11 +804,13 @@ public:
             Device.Pause(FALSE, TRUE, TRUE, "CCC_ALifeLoadFrom");
 
         Msg(">>> [CCC_ALifeLoadFrom] Sending M_LOAD_GAME net_packet for: '%s'", saved_game);
+        FlushLog();
         NET_Packet net_packet;
         net_packet.w_begin(M_LOAD_GAME);
         net_packet.w_stringZ(saved_game);
         Level().Send(net_packet, net_flags(TRUE));
         Msg(">>> [CCC_ALifeLoadFrom] M_LOAD_GAME packet sent successfully");
+        FlushLog();
     }
 
     virtual void fill_tips(vecTips& tips, u32 mode)
@@ -816,6 +829,7 @@ public:
     virtual void Execute(LPCSTR args)
     {
         Msg(">>> [CCC_LoadLastSave] Execute called with args: '%s', current g_last_saved_game='%s'", args ? args : "<null>", g_last_saved_game);
+        FlushLog();
         string_path saved_game = "";
         if (args)
         {
@@ -826,12 +840,14 @@ public:
         {
             Msg(">>> [CCC_LoadLastSave] Updating g_last_saved_game to: '%s'", saved_game);
             xr_strcpy(g_last_saved_game, saved_game);
+            FlushLog();
             return;
         }
 
         if (!*g_last_saved_game)
         {
             Msg("! cannot load last saved game since it hasn't been specified");
+            FlushLog();
             return;
         }
 
@@ -839,22 +855,26 @@ public:
         bool valid = CSavedGameWrapper::valid_saved_game(g_last_saved_game);
         bool valid_name = valid_saved_game_name(g_last_saved_game);
         Msg(">>> [CCC_LoadLastSave] target '%s': exist=%d, valid=%d, valid_name=%d", g_last_saved_game, (int)exist, (int)valid, (int)valid_name);
+        FlushLog();
 
         if (!exist)
         {
             Msg("! Cannot find saved game %s", g_last_saved_game);
+            FlushLog();
             return;
         }
 
         if (!valid)
         {
             Msg("! Cannot load saved game %s, version mismatch or saved game is corrupted", g_last_saved_game);
+            FlushLog();
             return;
         }
 
         if (!valid_name)
         {
             Msg("! Cannot load saved game %s, invalid file name", g_last_saved_game);
+            FlushLog();
             return;
         }
 
@@ -863,12 +883,14 @@ public:
         {
             STRCONCAT(command, "load ", g_last_saved_game);
             Msg(">>> [CCC_LoadLastSave] alife() is active, executing: '%s'", command);
+            FlushLog();
             Console->Execute(command);
             return;
         }
 
-        STRCONCAT(command, "start server(", g_last_saved_game, "/single/alife/load)");
+        STRCONCAT(command, "start server(", g_last_saved_game, "/single/alife/load) client(localhost)");
         Msg(">>> [CCC_LoadLastSave] alife() is not active, executing: '%s'", command);
+        FlushLog();
         Console->Execute(command);
     }
 

@@ -2,6 +2,7 @@
 #include "xrUICore/MessageBox/UIMessageBox.h"
 #include "UIMessageBoxEx.h"
 #include "UIDialogHolder.h"
+#include "xrEngine/Engine.h"
 
 CUIMessageBoxEx::CUIMessageBoxEx() : CUIDialogWnd(CUIMessageBoxEx::GetDebugType())
 {
@@ -82,6 +83,23 @@ void CUIMessageBoxEx::SendMessage(CUIWindow* pWnd, s16 msg, void* pData /* = NUL
         case MESSAGE_BOX_CANCEL_CLICKED:
         case MESSAGE_BOX_QUIT_WIN_CLICKED:
         case MESSAGE_BOX_QUIT_GAME_CLICKED: HideDialog();
+        }
+
+        // Native quit/disconnect: the Lua handlers (OnMessageQuitWin /
+        // OnMessageQuitGame) can't reach the console on Android, so run the
+        // original commands here. "quit" follows the normal shutdown path
+        // (KERNEL:disconnect + KERNEL:quit, cfg_save at destroy).
+        if (msg == MESSAGE_BOX_QUIT_WIN_CLICKED)
+        {
+            Msg(">>> [CUIMessageBoxEx] native quit to Windows");
+            FlushLog();
+            Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("quit")));
+        }
+        else if (msg == MESSAGE_BOX_QUIT_GAME_CLICKED)
+        {
+            Msg(">>> [CUIMessageBoxEx] native quit to main menu");
+            FlushLog();
+            Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("disconnect")));
         }
 
         if (GetMessageTarget())

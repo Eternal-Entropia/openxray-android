@@ -86,7 +86,14 @@ void CGameTask::Load(const TASK_ID& id)
 
     const XML_NODE task_node = gameTaskXml.NavigateToNodeWithAttribute("game_task", "id", id.c_str());
 
-    THROW3(task_node, "game task id = ", id.c_str());
+    if (!task_node)
+    {
+        // Task references may outlive game_tasks.xml (removed mods, version
+        // drift, stale saves). Aborting here kills the whole session, so keep
+        // a loud warning and a dummy task instead.
+        Msg("! CGameTask::Load: game task id '%s' not found in game_tasks.xml, using dummy task", id.c_str());
+        return;
+    }
     gameTaskXml.SetLocalRoot(task_node);
     m_Title = gameTaskXml.Read(gameTaskXml.GetLocalRoot(), "title", 0, nullptr);
     m_priority = gameTaskXml.ReadAttribInt(gameTaskXml.GetLocalRoot(), "prio", -1);
@@ -663,7 +670,9 @@ void CGameTask::load(IReader& stream)
     // Saved tasks are default-constructed, so load their current XML data
     // after the task ID becomes available. This repairs missing legacy icon
     // data in old SoC saves while saved state and progress still load below.
-    if (ShadowOfChernobylMode)
+    // Load() itself tolerates tasks missing from the XML (dummy task +
+    // warning), so a stale reference can't abort the save load.
+    if (ShadowOfChernobylMode && m_ID.size())
         Load(m_ID);
 
     const shared_str configuredRootIcon = m_icon_texture_name;

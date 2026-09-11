@@ -201,7 +201,10 @@ end
 
 function save_dialog:SaveFile(fileName)
 	if nil ~= fileName then
-		local console = get_console()
-		console:execute("save " .. fileName)
+		-- Bridge to C++: direct console calls from Lua silently no-op on
+		-- Android, so stash the name in a Lua global (pure Lua assignment)
+		-- and let CGamePersistent save natively on the next frame
+		-- (same path as quick save).
+		_G.pending_save_game = fileName
 	end
 end

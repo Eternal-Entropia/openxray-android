@@ -1,3 +1,29 @@
+local function log1(msg)
+	if _G.log1 then
+		_G.log1(msg)
+	elseif _G.log then
+		_G.log(msg)
+	end
+end
+
+-- See ui_main_menu.script: defer level-switching console commands so they run
+-- on the next frame, outside of the dialog Lua callback stack.
+local function exec_deferred(cmd)
+	if not cmd then
+		return
+	end
+	local console = get_console and get_console() or nil
+	if console and console.execute_deferred then
+		console:execute_deferred(cmd)
+	elseif _G.execute_console_deferred then
+		_G.execute_console_deferred(cmd)
+	elseif console then
+		console:execute(cmd)
+	elseif execute_console then
+		execute_console(cmd)
+	end
+end
+
 saved_game_extension	= ".sav"
 
 class "load_item" (CUIListBoxItem)
@@ -233,8 +259,6 @@ function load_dialog:OnMsgYes()
 end
 
 function load_dialog:load_game_internal(fname)
-	local console = get_console()
-
 	if not fname then
 		local item = self.list_box:GetSelectedItem()
 		if item then
@@ -247,9 +271,7 @@ function load_dialog:load_game_internal(fname)
 			end
 		end
 	end
-	log1(">>> [UI_LOAD_DIALOG] load_game_internal() started, fname='" .. tostring(fname) .. "'")
-	if not fname then
-		log1(">>> [UI_LOAD_DIALOG] load_game_internal: fname is nil/empty! Aborting.")
+	if not fname or fname == "" then
 		return
 	end
 
@@ -259,33 +281,11 @@ function load_dialog:load_game_internal(fname)
 		self.owner:Show(false)
 	end
 
-	if device() then
-		device():pause(false)
-	end
-	if console then
-		console:execute("main_menu off")
-	end
-	if xr_s and xr_s.on_main_menu_off then
-		xr_s.on_main_menu_off()
-	end
-
-	if (alife() == nil) then
-		log1(">>> [UI_LOAD_DIALOG] alife() is NIL (not in-game). Disconnecting and starting server...")
-		if console then
-			console:execute("disconnect")
-			local start_cmd = "start server(" .. fname .. "/single/alife/load) client(localhost)"
-			log1(">>> [UI_LOAD_DIALOG] Executing: " .. start_cmd)
-			console:execute(start_cmd)
-		end
-	else
-		log1(">>> [UI_LOAD_DIALOG] alife() is ACTIVE (in-game). Executing load command...")
-		if console then
-			local load_cmd = "load " .. fname
-			log1(">>> [UI_LOAD_DIALOG] Executing: " .. load_cmd)
-			console:execute(load_cmd)
-		end
-	end
-	log1(">>> [UI_LOAD_DIALOG] load_game_internal() finished issuing commands")
+	-- Bridge to C++: direct console/device calls from Lua silently no-op on
+	-- Android, so stash the chosen save in a Lua global (pure Lua assignment)
+	-- and let CGamePersistent pick it up on the next frame to start loading
+	-- natively (same proven path as the "load last save" button).
+	_G.pending_load_save = fname
 end
 
 function load_dialog:OnButton_load_clicked()

@@ -267,31 +267,39 @@ void IGame_Persistent::OnEvent(EVENT E, u64 P1, u64 P2)
         pstr op_client = pstr(P2);
         Msg(">>> [IGame_Persistent] OnEvent eStart: op_server='%s', op_client='%s', current g_pGameLevel=%p",
             op_server ? op_server : "<null>", op_client ? op_client : "<null>", g_pGameLevel);
+        FlushLog();
         Level_Current = u32(-1);
         R_ASSERT(nullptr == g_pGameLevel);
         Console->Execute("main_menu off");
         Console->Hide();
         //-----------------------------------------------------------
         Msg(">>> [IGame_Persistent] eStart: calling PreStart...");
+        FlushLog();
         PreStart(op_server);
         //-----------------------------------------------------------
         Msg(">>> [IGame_Persistent] eStart: calling CreateLevel...");
+        FlushLog();
         g_pGameLevel = CreateLevel();
         R_ASSERT(g_pGameLevel);
         LoadBegin();
         Msg(">>> [IGame_Persistent] eStart: calling Start(op_server)...");
+        FlushLog();
         Start(op_server);
         Msg(">>> [IGame_Persistent] eStart: calling g_pGameLevel->net_Start...");
+        FlushLog();
         g_pGameLevel->net_Start(op_server, op_client);
         Msg(">>> [IGame_Persistent] eStart: net_Start completed! Calling LoadEnd...");
+        FlushLog();
         LoadEnd();
         xr_free(op_server);
         xr_free(op_client);
         Msg(">>> [IGame_Persistent] eStart fully completed!");
+        FlushLog();
     }
     else if (E == eDisconnect)
     {
         Msg(">>> [IGame_Persistent] OnEvent eDisconnect (g_pGameLevel=%p)", g_pGameLevel);
+        FlushLog();
         if (pInput != nullptr && true == Engine.Event.Peek("KERNEL:quit"))
             pInput->GrabInput(false);
 
@@ -300,8 +308,10 @@ void IGame_Persistent::OnEvent(EVENT E, u64 P1, u64 P2)
             const bool show = Console->bVisible;
             Console->Hide();
             Msg(">>> [IGame_Persistent] eDisconnect: calling net_Stop...");
+            FlushLog();
             g_pGameLevel->net_Stop();
             Msg(">>> [IGame_Persistent] eDisconnect: calling DestroyLevel...");
+            FlushLog();
             DestroyLevel(g_pGameLevel);
             if (show)
                 Console->Show();
@@ -313,8 +323,10 @@ void IGame_Persistent::OnEvent(EVENT E, u64 P1, u64 P2)
             }
         }
         Msg(">>> [IGame_Persistent] eDisconnect: calling Disconnect()...");
+        FlushLog();
         Disconnect();
         Msg(">>> [IGame_Persistent] eDisconnect completed!");
+        FlushLog();
     }
     else if (E == eStartMPDemo)
     {

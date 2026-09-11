@@ -492,6 +492,61 @@ void CGamePersistent::OnFrame()
 {
     ZoneScoped;
 
+    // Lua bridge for ui_load_dialog/ui_save_dialog: direct Lua->C++ calls
+    // (console, device) silently no-op on Android, so the dialogs stash the
+    // chosen save name in a Lua global (pure Lua assignment) and the action
+    // runs here, natively, outside any Lua callback stack.
+    {
+        lua_State* L = GEnv.ScriptEngine->lua();
+        lua_getglobal(L, "pending_load_save");
+        if (lua_isstring(L, -1))
+        {
+            string_path saved_name = {};
+            xr_strcpy(saved_name, sizeof(saved_name), lua_tostring(L, -1));
+            lua_pop(L, 1);
+            lua_pushnil(L);
+            lua_setglobal(L, "pending_load_save");
+            if (xr_strlen(saved_name))
+            {
+                Msg(">>> [GamePersistent] pending_load_save picked up: '%s'", saved_name);
+                FlushLog();
+                if (Device.Paused())
+                    Device.Pause(FALSE, TRUE, TRUE, "pending_load_save");
+                if (m_pMainMenu && m_pMainMenu->IsActive())
+                    m_pMainMenu->Activate(false);
+                // Reuse the proven load_last_save path: first call records the
+                // name, second one loads (fresh server or in-level, as needed).
+                string4096 cmd;
+                xr_sprintf(cmd, "load_last_save %s", saved_name);
+                Engine.Event.Defer("KERNEL:console", size_t(xr_strdup(cmd)));
+                Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("load_last_save")));
+            }
+        }
+        else
+            lua_pop(L, 1);
+
+        lua_getglobal(L, "pending_save_game");
+        if (lua_isstring(L, -1))
+        {
+            string_path save_name = {};
+            xr_strcpy(save_name, sizeof(save_name), lua_tostring(L, -1));
+            lua_pop(L, 1);
+            lua_pushnil(L);
+            lua_setglobal(L, "pending_save_game");
+            if (xr_strlen(save_name))
+            {
+                Msg(">>> [GamePersistent] pending_save_game picked up: '%s'", save_name);
+                FlushLog();
+                // Same path as quick save.
+                string4096 cmd;
+                xr_sprintf(cmd, "save %s", save_name);
+                Engine.Event.Defer("KERNEL:console", size_t(xr_strdup(cmd)));
+            }
+        }
+        else
+            lua_pop(L, 1);
+    }
+
     if (Device.dwPrecacheFrame == 5 && m_intro_event.empty())
     {
         LoadTitle();

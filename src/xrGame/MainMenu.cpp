@@ -6,6 +6,7 @@
 #include "xrEngine/IGame_Level.h"
 #include "xrEngine/CameraManager.h"
 #include "xrEngine/xr_level_controller.h"
+#include "xrEngine/Engine.h"
 #include "xrUICore/XML/UITextureMaster.h"
 #include "ui/UIXmlInit.h"
 #include <SDL.h>
@@ -248,7 +249,7 @@ void CMainMenu::Activate(bool bActivate)
         if (show)
             Console->Show();
 
-        if (m_startDialog->IsShown())
+        if (m_startDialog && m_startDialog->IsShown())
             m_startDialog->HideDialog();
 
         CleanInternals();
@@ -307,9 +308,32 @@ void CMainMenu::Activate(bool bActivate)
 
 bool CMainMenu::ReloadUI()
 {
+    // Diagnostic for Android main-menu soft-hang: StartGame/load silently no-op
+    // when engine Lua globals are missing (every call in those methods is nil-guarded).
+    // Prints once per menu creation; check logcat for MISSING entries.
+    {
+        lua_State* L = GEnv.ScriptEngine->lua();
+        auto check_global = [L](pcstr name)
+        {
+            lua_getglobal(L, name);
+            const bool present = !lua_isnil(L, -1);
+            lua_pop(L, 1);
+            Msg("* CMainMenu::ReloadUI(): lua global '%s' %s", name, present ? "present" : "MISSING!");
+            return present;
+        };
+        check_global("get_console");
+        check_global("execute_console");
+        check_global("execute_console_deferred");
+        check_global("device");
+        check_global("device_pause");
+        check_global("alife");
+        check_global("log1");
+        check_global("flush1");
+        FlushLog();
+    }
     if (m_startDialog)
     {
-        if (m_startDialog->IsShown())
+        if (m_startDialog && m_startDialog->IsShown())
             m_startDialog->HideDialog();
         CleanInternals();
     }
@@ -414,6 +438,17 @@ void CMainMenu::IR_OnKeyboardPress(int dik)
 
     case kEDITOR:
         Device.editor().SwitchToNextState();
+        return;
+    }
+
+    // Native back handling: the Lua OnKeyboard -> OnButton_return_game path
+    // can't reach the console on Android, so resume an active game level here.
+    // (Without a level there is nothing to return to: let Lua handle it.)
+    if (g_pGameLevel && (dik == SDL_SCANCODE_ESCAPE || GetBindedAction(dik) == kQUIT))
+    {
+        Msg(">>> [CMainMenu] native back: resuming game");
+        FlushLog();
+        Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("main_menu off")));
         return;
     }
 
@@ -696,12 +731,25 @@ bool CMainMenu::FillDebugTree(const CUIDebugState& debugState)
 #endif
 }
 
-void CMainMenu::SwitchToMultiplayerMenu() { m_startDialog->Dispatch(2, 1); };
+void CMainMenu::SwitchToMultiplayerMenu()
+{
+    if (m_startDialog)
+        m_startDialog->Dispatch(2, 1);
+};
 void CMainMenu::DestroyInternal(bool bForce)
 {
-    if (m_startDialog && ((m_deactivated_frame < Device.dwFrame + 4) || bForce))
+    // Never delete the dialog in the same frame it was deactivated: deactivation
+    // ("main_menu off") can be triggered synchronously from inside the dialog's own
+    // Lua callback, and deleting m_startDialog while its method is still on the Lua
+    // stack hangs/crashes the game (observed on Android when starting a new game or
+    // loading a save from the main menu). Deletion happens a couple of frames later
+    // from CGamePersistent::OnFrame, when the Lua stack has long been unwound.
+    // Note: the old condition (m_deactivated_frame < Device.dwFrame + 4) was true
+    // almost immediately, i.e. it deleted synchronously.
+    if (m_startDialog && (bForce || (Device.dwFrame > m_deactivated_frame + 1)))
     {
-        m_startDialog->HideDialog();
+        if (m_startDialog->IsShown())
+            m_startDialog->HideDialog();
         xr_delete(m_startDialog);
     }
 }

@@ -15,6 +15,9 @@
 #include "MainMenu.h"
 #include "xrGameSpy/GameSpy_Full.h"
 #include "UIHelper.h"
+#include "ai_space.h"
+#include "xrEngine/Engine.h"
+#include "xrEngine/XR_IOConsole.h"
 
 extern string_path g_last_saved_game;
 
@@ -231,6 +234,7 @@ void CUIMMShniaga::ShowMain()
     for (u32 i = 0; i < m_buttons.size(); i++)
         m_view->AddWindow(m_buttons[i], false);
 
+    m_view->ScrollToBegin();
     SelectBtn(m_buttons[0]);
 }
 
@@ -241,6 +245,7 @@ void CUIMMShniaga::ShowNewGame()
     for (u32 i = 0; i < m_buttons_new.size(); i++)
         m_view->AddWindow(m_buttons_new[i], false);
 
+    m_view->ScrollToBegin();
     SelectBtn(m_buttons_new[0]);
 }
 
@@ -253,6 +258,7 @@ void CUIMMShniaga::ShowNetworkGame()
     {
         m_view->AddWindow(m_buttons_new_network[i], false);
     }
+    m_view->ScrollToBegin();
     SelectBtn(m_buttons_new_network[0]);
 }
 
@@ -304,31 +310,21 @@ void CUIMMShniaga::SelectBtn(int btn)
 void CUIMMShniaga::SelectBtn(CUIWindow* btn)
 {
     R_ASSERT(m_page >= 0);
-    for (int i = 0; i < (int)m_buttons.size(); ++i)
+    xr_vector<CUIStatic*>* lst = nullptr;
+    switch (m_page)
     {
-        if (0 == m_page)
+    case epi_main:             lst = &m_buttons; break;
+    case epi_new_game:         lst = &m_buttons_new; break;
+    case epi_new_network_game: lst = &m_buttons_new_network; break;
+    default: return;
+    }
+
+    for (int i = 0; i < (int)lst->size(); ++i)
+    {
+        if ((*lst)[i] == btn)
         {
-            if (m_buttons[i] == btn)
-            {
-                SelectBtn(i);
-                return;
-            }
-        }
-        else if (1 == m_page)
-        {
-            if (m_buttons_new[i] == btn)
-            {
-                SelectBtn(i);
-                return;
-            }
-        }
-        else if (2 == m_page)
-        {
-            if (m_buttons_new_network[i] == btn)
-            {
-                SelectBtn(i);
-                return;
-            }
+            SelectBtn(i);
+            return;
         }
     }
 }
@@ -367,22 +363,114 @@ void CUIMMShniaga::Update()
 bool CUIMMShniaga::OnMouseAction(float x, float y, EUIMessages mouse_action)
 {
     Fvector2 pos = UI().GetUICursor().GetCursorPosition();
-    Frect r;
-    m_magnifier->GetAbsoluteRect(r);
-    if (WINDOW_LBUTTON_DOWN == mouse_action && r.in(pos.x, pos.y))
+
+    if (WINDOW_LBUTTON_DOWN == mouse_action)
     {
-        OnBtnClick();
+        xr_vector<CUIStatic*>* lst = nullptr;
+        switch (m_page)
+        {
+        case epi_main:             lst = &m_buttons; break;
+        case epi_new_game:         lst = &m_buttons_new; break;
+        case epi_new_network_game: lst = &m_buttons_new_network; break;
+        default: break;
+        }
+
+        if (lst)
+        {
+            for (int i = 0; i < (int)lst->size(); ++i)
+            {
+                Frect r_btn;
+                (*lst)[i]->GetAbsoluteRect(r_btn);
+                if (r_btn.in(pos.x, pos.y))
+                {
+                    SelectBtn(i);
+                    OnBtnClick();
+                    return true;
+                }
+            }
+        }
+
+        Frect r;
+        m_magnifier->GetAbsoluteRect(r);
+        if (r.in(pos.x, pos.y))
+        {
+            OnBtnClick();
+            return true;
+        }
     }
 
     return CUIWindow::OnMouseAction(x, y, mouse_action);
 }
 
+namespace {
+// Native handling of new-game / load-last-save buttons.
+//
+// Lua UI callbacks (luabind) silently no-op on Android: the callback returns
+// without executing any Lua->C++ calls, so starting a game or loading a save
+// from the main menu appears to hang. These buttons are therefore handled
+// natively here; the Lua message is NOT forwarded for them.
+bool HandleMenuButtonNative(pcstr btn_name)
+{
+    pcstr difficulty = nullptr;
+    if (0 == xr_strcmp("btn_novice", btn_name))
+        difficulty = "gd_novice";
+    else if (0 == xr_strcmp("btn_stalker", btn_name))
+        difficulty = "gd_stalker";
+    else if (0 == xr_strcmp("btn_veteran", btn_name))
+        difficulty = "gd_veteran";
+    else if (0 == xr_strcmp("btn_master", btn_name))
+        difficulty = "gd_master";
+
+    if (difficulty)
+    {
+        Msg(">>> [CUIMMShniaga] native StartGame, difficulty='%s'", difficulty);
+        FlushLog();
+        string256 cmd;
+        xr_sprintf(cmd, "g_game_difficulty %s", difficulty);
+        Console->Execute(cmd);
+        if (ai().get_alife())
+            Engine.Event.Defer("KERNEL:disconnect");
+        Engine.Event.Defer(
+            "KERNEL:start", size_t(xr_strdup("all/single/alife/new")), size_t(xr_strdup("localhost")));
+        // NOTE: no explicit "main_menu off" needed, eStart handler does it.
+        return true;
+    }
+
+    if (0 == xr_strcmp("btn_lastsave", btn_name))
+    {
+        Msg(">>> [CUIMMShniaga] native LoadLastSave");
+        FlushLog();
+        Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("load_last_save")));
+        Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("main_menu off")));
+        return true;
+    }
+
+    if (0 == xr_strcmp("btn_ret", btn_name))
+    {
+        Msg(">>> [CUIMMShniaga] native return to game");
+        FlushLog();
+        Engine.Event.Defer("KERNEL:console", size_t(xr_strdup("main_menu off")));
+        return true;
+    }
+    return false;
+}
+} // namespace
+
 void CUIMMShniaga::OnBtnClick()
 {
+    Msg(">>> [CUIMMShniaga] OnBtnClick: selected='%s', page=%d, target=%p, parent=%p",
+        m_selected ? m_selected->WindowName().c_str() : "<null>", m_page, GetMessageTarget(), GetParent());
+    FlushLog();
+
+    if (!m_selected)
+        return;
     if (0 == xr_strcmp("btn_new_game", m_selected->WindowName()))
         ShowNewGame();
     else if (0 == xr_strcmp("btn_new_back", m_selected->WindowName()))
         ShowMain();
+    else if (HandleMenuButtonNative(m_selected->WindowName().c_str()))
+    {
+    }
     else
         GetMessageTarget()->SendMessage(m_selected, BUTTON_CLICKED);
 }

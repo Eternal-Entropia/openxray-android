@@ -102,7 +102,6 @@ void CLevel::g_sv_Spawn(CSE_Abstract* E)
 
     // Client spawn
     //	T.Start		();
-    Msg(">>> [g_sv_Spawn] Creating/spawning: %s, ID=%d", E->s_name.c_str(), E->ID);
     IGameObject* O = Objects.Create(E->s_name.c_str());
 // Msg				("--spawn--CREATE: %f ms",1000.f*T.GetAsync());
 
@@ -120,7 +119,6 @@ void CLevel::g_sv_Spawn(CSE_Abstract* E)
     }
     else
     {
-        Msg(">>> [g_sv_Spawn] Successfully spawned: %s, ID=%d", E->s_name.c_str(), E->ID);
         if (!GEnv.isDedicatedServer)
             client_spawn_manager().callback(O);
         // Msg			("--spawn--SPAWN: %f ms",1000.f*T.GetAsync());

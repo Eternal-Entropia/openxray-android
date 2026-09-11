@@ -58,9 +58,7 @@ void CALifeSwitchManager::add_online(CSE_ALifeDynamicObject* object, bool update
     object->s_flags._or (M_SPAWN_UPDATE);
     ClientID clientID;
     clientID.set(server().GetServerClient() ? server().GetServerClient()->ID.value() : 0);
-    Msg(">>> [add_online] Process_spawn [%s][%d]...", object->name_replace(), object->ID);
     server().Process_spawn(tNetPacket, clientID, FALSE, l_tpAbstract);
-    Msg(">>> [add_online] Process_spawn [%s][%d] done", object->name_replace(), object->ID);
     object->s_flags._and (u16(-1) ^ M_SPAWN_UPDATE);
 
 	//Alundaio: Workaround for crash with corpses that end up outside AI map
@@ -251,12 +249,10 @@ void CALifeSwitchManager::switch_object(CSE_ALifeDynamicObject* I)
 
     if (I->m_bOnline)
     {
-        Msg(">>> [switch_object] try_switch_offline [%s][%d]", I->name_replace(), I->ID);
         try_switch_offline(I);
     }
     else
     {
-        Msg(">>> [switch_object] try_switch_online [%s][%d]", I->name_replace(), I->ID);
         try_switch_online(I);
     }
 

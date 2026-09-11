@@ -34,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Port by Eternal Entropia. Alpha v1"
+                android:text="Port by Eternal Entropia. Alpha v2"
                 android:textColor="@color/text_muted"
                 android:textSize="14sp" />
         </LinearLayout>
@@ -72,58 +72,60 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
+                    <EditText
+                        android:id="@+id/edit_game_path"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:background="@drawable/edittext_bg"
+                        android:hint="/sdcard/OpenXRay"
+                        android:textColor="@color/text_main"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="13sp"
+                        android:paddingHorizontal="10dp"
+                        android:singleLine="true"
+                        android:layout_marginBottom="8dp" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <EditText
-                            android:id="@+id/edit_game_path"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/edittext_bg"
-                            android:hint="/sdcard/OpenXRay"
-                            android:textColor="@color/text_main"
-                            android:textColorHint="@color/text_muted"
-                            android:textSize="13sp"
-                            android:paddingHorizontal="10dp"
-                            android:singleLine="true" />
-
                         <Button
                             android:id="@+id/btn_browse_path"
-                            android:layout_width="wrap_content"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="6dp"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_weight="1"
                             android:background="@drawable/btn_secondary"
                             android:text="BROWSE"
                             android:textColor="@color/text_main"
                             android:textSize="11sp"
-                            android:paddingHorizontal="10dp" />
+                            android:paddingHorizontal="8dp" />
 
                         <Button
                             android:id="@+id/btn_check_path"
-                            android:layout_width="wrap_content"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="6dp"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
                             android:background="@drawable/btn_secondary"
                             android:text="CHECK"
                             android:textColor="@color/text_main"
                             android:textSize="11sp"
-                            android:paddingHorizontal="10dp" />
+                            android:paddingHorizontal="8dp" />
 
                         <Button
                             android:id="@+id/btn_view_logs"
-                            android:layout_width="wrap_content"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="6dp"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
                             android:background="@drawable/btn_secondary"
                             android:text="LOGS"
                             android:textColor="@color/amber_primary"
                             android:textSize="11sp"
                             android:textStyle="bold"
-                            android:paddingHorizontal="10dp" />
+                            android:paddingHorizontal="8dp" />
                     </LinearLayout>
 
                     <TextView
@@ -157,7 +159,7 @@
                         android:id="@+id/radiogroup_gamemode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:orientation="vertical"
                         android:layout_marginBottom="8dp">
 
                         <RadioButton
@@ -168,7 +170,7 @@
                             android:textColor="@color/text_main"
                             android:textSize="12sp"
                             android:checked="true"
-                            android:layout_marginEnd="12dp" />
+                            android:layout_marginBottom="2dp" />
 
                         <RadioButton
                             android:id="@+id/radio_cs"
@@ -177,7 +179,7 @@
                             android:text="Clear Sky (-cs)"
                             android:textColor="@color/text_main"
                             android:textSize="12sp"
-                            android:layout_marginEnd="12dp" />
+                            android:layout_marginBottom="2dp" />
 
                         <RadioButton
                             android:id="@+id/radio_cop"
@@ -202,17 +204,7 @@
                             android:textColor="@color/text_main"
                             android:textSize="12sp"
                             android:checked="true"
-                            android:layout_marginEnd="12dp" />
-
-                        <CheckBox
-                            android:id="@+id/check_rgl"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="OpenGL (-rgl)"
-                            android:textColor="@color/text_main"
-                            android:textSize="12sp"
-                            android:checked="true"
-                            android:layout_marginEnd="12dp" />
+                            android:layout_marginEnd="16dp" />
 
                         <CheckBox
                             android:id="@+id/check_nosound"
@@ -244,16 +236,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Dynamic light"
-                            android:textColor="@color/text_main"
-                            android:textSize="12sp"
-                            android:checked="true"
-                            android:layout_marginEnd="12dp" />
-
-                        <CheckBox
-                            android:id="@+id/check_no_occq"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="No occlusion (-no_occq)"
                             android:textColor="@color/text_main"
                             android:textSize="12sp"
                             android:checked="true" />
@@ -289,6 +271,7 @@
                         android:layout_height="38dp"
                         android:background="@drawable/edittext_bg"
                         android:hint="e.g. -noprefetch -dbg"
+                        android:text="-xclsx"
                         android:textColor="@color/text_main"
                         android:textColorHint="@color/text_muted"
                         android:textSize="12sp"

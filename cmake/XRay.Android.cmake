@@ -56,9 +56,34 @@ endif()
 
 # Theora
 if (NOT TARGET Theora::Theora)
-    add_library(theora_stub STATIC "${CMAKE_CURRENT_LIST_DIR}/android/theora_stub.c")
-    target_include_directories(theora_stub PUBLIC "${CMAKE_SOURCE_DIR}/sdk/include")
-    add_library(Theora::Theora ALIAS theora_stub)
+    set(_theora_src_dir "${CMAKE_CURRENT_LIST_DIR}/android/theora")
+    add_library(theora STATIC
+        "${_theora_src_dir}/apiwrapper.c"
+        "${_theora_src_dir}/bitpack.c"
+        "${_theora_src_dir}/decapiwrapper.c"
+        "${_theora_src_dir}/decinfo.c"
+        "${_theora_src_dir}/decode.c"
+        "${_theora_src_dir}/dequant.c"
+        "${_theora_src_dir}/fragment.c"
+        "${_theora_src_dir}/huffdec.c"
+        "${_theora_src_dir}/idct.c"
+        "${_theora_src_dir}/info.c"
+        "${_theora_src_dir}/internal.c"
+        "${_theora_src_dir}/quant.c"
+        "${_theora_src_dir}/state.c"
+    )
+    set_target_properties(theora PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_include_directories(theora
+        PUBLIC
+            "${CMAKE_SOURCE_DIR}/sdk/include"
+        PRIVATE
+            "${_theora_src_dir}"
+    )
+    target_link_libraries(theora PUBLIC Ogg::Ogg)
+    add_library(Theora::Theora ALIAS theora)
+    if (NOT TARGET Theora::TheoraDec)
+        add_library(Theora::TheoraDec ALIAS theora)
+    endif()
 endif()
 
 # 4. OpenAL-Soft
