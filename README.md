@@ -12,7 +12,9 @@
 
 This rep is alpha for openxray port on android with support soc
 
-cs and cop not tested yet. videos and load save on soc not work in alpha v1. more bugs
+for install soc: drop all gamedata.db for soc in /storage/emulated/0/Openxray and drop all from res directory from this git 
+
+cs and cop not tested yet. soc more bugs
 
 thanks: https://github.com/TmLev/xray-16/tree/refs/heads/tmlev/shadow-of-chernobyl
 
