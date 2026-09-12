@@ -274,6 +274,9 @@ void UICore::ReadTextureInfo()
     if (0 != xr_strcmp(UI_PATH, UI_PATH_DEFAULT))
         ParseFileSet(UI_PATH);
 
+    ParseFileSet("ui" DELIMITER "styles_" DELIMITER "ui_style_cs");
+    ParseFileSet("ui" DELIMITER "styles" DELIMITER "ui_style_cs");
+
     if (pSettings->section_exist("texture_desc"))
     {
         string256 single_item;

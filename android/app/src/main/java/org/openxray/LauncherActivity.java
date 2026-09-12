@@ -61,6 +61,10 @@ public class LauncherActivity extends AppCompatActivity {
     private Spinner mSpinnerResolution;
     private java.util.List<ResolutionItem> mResolutionList = new java.util.ArrayList<>();
     private ArrayAdapter<ResolutionItem> mResolutionAdapter;
+    private Spinner mSpinnerRenderBackend;
+    private TextView mTextRenderBackendStatus;
+    private java.util.List<RenderBackendItem> mRenderBackendList = new java.util.ArrayList<>();
+    private ArrayAdapter<RenderBackendItem> mRenderBackendAdapter;
     private EditText mEditCustomArgs;
 
     private TextView mLabelLookSens;
@@ -125,6 +129,9 @@ public class LauncherActivity extends AppCompatActivity {
         mCheckDLights = findViewById(R.id.check_dlights);
         mSpinnerResolution = findViewById(R.id.spinner_resolution);
         setupResolutionSpinner();
+        mSpinnerRenderBackend = findViewById(R.id.spinner_render_backend);
+        mTextRenderBackendStatus = findViewById(R.id.text_render_backend_status);
+        setupRenderBackendSpinner();
         mEditCustomArgs = findViewById(R.id.edit_custom_args);
 
         mLabelLookSens = findViewById(R.id.label_look_sens);
@@ -254,6 +261,20 @@ public class LauncherActivity extends AppCompatActivity {
             mSpinnerResolution.setSelection(selectedIndex);
         }
 
+        String savedBackend = mPrefs.getString("render_backend", "native");
+        int backendIndex = 0;
+        for (int i = 0; i < mRenderBackendList.size(); i++) {
+            RenderBackendItem item = mRenderBackendList.get(i);
+            if (item.id.equals(savedBackend)) {
+                backendIndex = i;
+                break;
+            }
+        }
+        if (mSpinnerRenderBackend != null) {
+            mSpinnerRenderBackend.setSelection(backendIndex);
+            updateRenderBackendStatus();
+        }
+
         String diff = mPrefs.getString("difficulty", "gd_novice");
         if ("gd_stalker".equals(diff)) mRadioDiffStalker.setChecked(true);
         else if ("gd_veteran".equals(diff)) mRadioDiffVeteran.setChecked(true);
@@ -290,6 +311,13 @@ public class LauncherActivity extends AppCompatActivity {
             mPrefs.edit()
                 .putInt("res_width", item.width)
                 .putInt("res_height", item.height)
+                .apply();
+        }
+
+        if (mSpinnerRenderBackend != null && mSpinnerRenderBackend.getSelectedItem() instanceof RenderBackendItem) {
+            RenderBackendItem item = (RenderBackendItem) mSpinnerRenderBackend.getSelectedItem();
+            mPrefs.edit()
+                .putString("render_backend", item.id)
                 .apply();
         }
     }
@@ -410,14 +438,20 @@ public class LauncherActivity extends AppCompatActivity {
         float opacity = Math.max(20, mSeekTouchOpacity.getProgress()) / 100.0f;
         float scale = Math.max(70, mSeekTouchScale.getProgress()) / 100.0f;
 
+        String renderBackend = "native";
+        if (mSpinnerRenderBackend != null && mSpinnerRenderBackend.getSelectedItem() instanceof RenderBackendItem) {
+            renderBackend = ((RenderBackendItem) mSpinnerRenderBackend.getSelectedItem()).id;
+        }
+
         String finalArgs = argsBuilder.toString().trim();
-        AppLog.i("Launcher", "Starting OpenXRayActivity: isNewGame=" + isNewGame + ", args: " + finalArgs);
+        AppLog.i("Launcher", "Starting OpenXRayActivity: isNewGame=" + isNewGame + ", renderBackend=" + renderBackend + ", args: " + finalArgs);
 
         Intent gameIntent = new Intent(this, OpenXRayActivity.class);
         gameIntent.putExtra("extra_args", finalArgs);
         gameIntent.putExtra("extra_game_path", pathStr);
         gameIntent.putExtra("extra_res_width", resW);
         gameIntent.putExtra("extra_res_height", resH);
+        gameIntent.putExtra("extra_render_backend", renderBackend);
         gameIntent.putExtra("extra_look_sensitivity", sens);
         gameIntent.putExtra("extra_touch_opacity", opacity);
         gameIntent.putExtra("extra_touch_scale", scale);
@@ -789,5 +823,84 @@ public class LauncherActivity extends AppCompatActivity {
         );
         mResolutionAdapter.setDropDownViewResource(R.layout.item_resolution_dropdown);
         mSpinnerResolution.setAdapter(mResolutionAdapter);
+    }
+
+    public static class RenderBackendItem {
+        public final String title;
+        public final String id;
+
+        public RenderBackendItem(String title, String id) {
+            this.title = title;
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return title;
+        }
+    }
+
+    private void setupRenderBackendSpinner() {
+        mRenderBackendList.clear();
+        mRenderBackendList.add(new RenderBackendItem("Native OpenGL ES", "native"));
+        mRenderBackendList.add(new RenderBackendItem("OpenGL ES -> Vulkan (ANGLE)", "angle_vulkan"));
+        mRenderBackendList.add(new RenderBackendItem("OpenGL ES -> OpenGL ES (ANGLE)", "angle_gles"));
+
+        mRenderBackendAdapter = new ArrayAdapter<>(
+            this,
+            R.layout.item_resolution_spinner,
+            mRenderBackendList
+        );
+        mRenderBackendAdapter.setDropDownViewResource(R.layout.item_resolution_dropdown);
+        mSpinnerRenderBackend.setAdapter(mRenderBackendAdapter);
+
+        mSpinnerRenderBackend.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                updateRenderBackendStatus();
+            }
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+    }
+
+    private boolean isAngleAvailable() {
+        try {
+            String appLibDir = getApplicationInfo().nativeLibraryDir;
+            if (appLibDir != null && new File(appLibDir, "libEGL_angle.so").exists()) {
+                return true;
+            }
+        } catch (Exception ignored) {}
+        String[] systemDirs = {
+            "/apex/com.android.angle/lib64",
+            "/system/lib64/egl",
+            "/vendor/lib64/egl"
+        };
+        for (String dir : systemDirs) {
+            if (new File(dir, "libEGL_angle.so").exists()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void updateRenderBackendStatus() {
+        if (mTextRenderBackendStatus == null || mSpinnerRenderBackend == null) return;
+        Object selected = mSpinnerRenderBackend.getSelectedItem();
+        if (selected instanceof RenderBackendItem) {
+            RenderBackendItem item = (RenderBackendItem) selected;
+            if ("angle_vulkan".equals(item.id) || "angle_gles".equals(item.id)) {
+                mTextRenderBackendStatus.setVisibility(View.VISIBLE);
+                if (isAngleAvailable()) {
+                    mTextRenderBackendStatus.setText("✓ ANGLE libraries detected in APK");
+                    mTextRenderBackendStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green));
+                } else {
+                    mTextRenderBackendStatus.setText("⚠ ANGLE libraries not found in APK. Run scripts/build_angle.bat to build them (will fallback to Native).");
+                    mTextRenderBackendStatus.setTextColor(ContextCompat.getColor(this, R.color.amber_primary));
+                }
+            } else {
+                mTextRenderBackendStatus.setVisibility(View.GONE);
+            }
+        }
     }
 }

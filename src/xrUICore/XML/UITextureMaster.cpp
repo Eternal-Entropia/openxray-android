@@ -102,10 +102,115 @@ bool CUITextureMaster::IsSh(const shared_str& texture_name)
     return strchr(texture_name.c_str(), _DELIMITER) == nullptr;
 }
 
+static pcstr GetTextureFallback(pcstr name)
+{
+    if (!name || !name[0])
+        return nullptr;
+
+    if (strnicmp(name, "ui_ingame2_", 11) == 0 || strnicmp(name, "ui_inGame2_", 11) == 0)
+    {
+        pcstr sub = name + 11;
+
+        // Big buttons (btn_load, btn_delete, btn_cancel, btn_accept, etc.)
+        if (stricmp(sub, "Mp_bigbuttone_e") == 0 || stricmp(sub, "mp_bigbuttone_e") == 0) return "ui_button_main02_e";
+        if (stricmp(sub, "Mp_bigbuttone_d") == 0 || stricmp(sub, "mp_bigbuttone_d") == 0) return "ui_button_main02_d";
+        if (stricmp(sub, "Mp_bigbuttone_h") == 0 || stricmp(sub, "mp_bigbuttone_h") == 0) return "ui_button_main02_h";
+        if (stricmp(sub, "Mp_bigbuttone_t") == 0 || stricmp(sub, "mp_bigbuttone_t") == 0) return "ui_button_main02_t";
+        if (stricmp(sub, "Mp_bigbuttone") == 0 || stricmp(sub, "mp_bigbuttone") == 0)   return "ui_button_main02";
+
+        // Tab buttons (video, sound, gameplay, controls, etc.)
+        if (stricmp(sub, "opt_button_1_e") == 0) return "ui_button_tablist_e";
+        if (stricmp(sub, "opt_button_1_d") == 0) return "ui_button_tablist_d";
+        if (stricmp(sub, "opt_button_1_h") == 0) return "ui_button_tablist_h";
+        if (stricmp(sub, "opt_button_1_t") == 0) return "ui_button_tablist_t";
+        if (stricmp(sub, "opt_button_1") == 0)   return "ui_button_tablist";
+
+        if (stricmp(sub, "opt_button_2_e") == 0) return "ui_button_tablist_e";
+        if (stricmp(sub, "opt_button_2_d") == 0) return "ui_button_tablist_d";
+        if (stricmp(sub, "opt_button_2_h") == 0) return "ui_button_tablist_h";
+        if (stricmp(sub, "opt_button_2_t") == 0) return "ui_button_tablist_t";
+        if (stricmp(sub, "opt_button_2") == 0)   return "ui_button_tablist";
+
+        // Ordinary buttons (btn_advanced, etc.)
+        if (stricmp(sub, "button_e") == 0) return "ui_button_ordinary_e";
+        if (stricmp(sub, "button_d") == 0) return "ui_button_ordinary_d";
+        if (stricmp(sub, "button_h") == 0) return "ui_button_ordinary_h";
+        if (stricmp(sub, "button_t") == 0) return "ui_button_ordinary_t";
+        if (stricmp(sub, "button") == 0)   return "ui_button_ordinary";
+
+        // Server list button
+        if (stricmp(sub, "servers_list_button_e") == 0) return "ui_button_ordinary_e";
+        if (stricmp(sub, "servers_list_button_d") == 0) return "ui_button_ordinary_d";
+        if (stricmp(sub, "servers_list_button_h") == 0) return "ui_button_ordinary_h";
+        if (stricmp(sub, "servers_list_button_t") == 0) return "ui_button_ordinary_t";
+        if (stricmp(sub, "servers_list_button") == 0)   return "ui_button_ordinary";
+
+        // Checkbox
+        if (stricmp(sub, "checkbox_e") == 0) return "ui_checker_e";
+        if (stricmp(sub, "checkbox_d") == 0) return "ui_checker_d";
+        if (stricmp(sub, "checkbox_h") == 0) return "ui_checker_h";
+        if (stricmp(sub, "checkbox_t") == 0) return "ui_checker_t";
+        if (stricmp(sub, "checkbox") == 0)   return "ui_checker";
+
+        // Slider
+        if (stricmp(sub, "opt_slider_bar") == 0)    return "ui_slider_e_back";
+        if (stricmp(sub, "opt_slider_box_e") == 0)  return "ui_slider_button_e";
+        if (stricmp(sub, "opt_slider_box_d") == 0)  return "ui_slider_button_d";
+        if (stricmp(sub, "opt_slider_box_h") == 0)  return "ui_slider_button_h";
+        if (stricmp(sub, "opt_slider_box_t") == 0)  return "ui_slider_button_t";
+        if (stricmp(sub, "opt_slider_box") == 0)    return "ui_slider_button";
+
+        // Spin box
+        if (stricmp(sub, "spin_box") == 0)                  return "ui_spiner_back";
+        if (stricmp(sub, "spin_box_button_top_e") == 0)    return "ui_spiner_button_t_e";
+        if (stricmp(sub, "spin_box_button_top_d") == 0)    return "ui_spiner_button_t_d";
+        if (stricmp(sub, "spin_box_button_top_h") == 0)    return "ui_spiner_button_t_h";
+        if (stricmp(sub, "spin_box_button_top_t") == 0)    return "ui_spiner_button_t_t";
+        if (stricmp(sub, "spin_box_button_top") == 0)      return "ui_spiner_button_t";
+        if (stricmp(sub, "spin_box_button_bottom_e") == 0) return "ui_spiner_button_b_e";
+        if (stricmp(sub, "spin_box_button_bottom_d") == 0) return "ui_spiner_button_b_d";
+        if (stricmp(sub, "spin_box_button_bottom_h") == 0) return "ui_spiner_button_b_h";
+        if (stricmp(sub, "spin_box_button_bottom_t") == 0) return "ui_spiner_button_b_t";
+        if (stricmp(sub, "spin_box_button_bottom") == 0)   return "ui_spiner_button_b";
+
+        // Combobox / Editbox
+        if (stricmp(sub, "combobox_linetext") == 0) return "ui_linetext_e_back";
+        if (stricmp(sub, "combobox_line_b") == 0)   return "ui_listline_b";
+        if (stricmp(sub, "combobox_line_e") == 0)   return "ui_listline_e";
+        if (stricmp(sub, "combobox_line") == 0)     return "ui_listline_back";
+        if (stricmp(sub, "combobox") == 0)          return "ui_tablist_textbox";
+        if (stricmp(sub, "edit_box_1") == 0)        return "ui_linetext_e_back";
+
+        // Windows / Backgrounds
+        if (stricmp(sub, "opt_background") == 0)     return "ui_menu_options_dlg";
+        if (stricmp(sub, "opt_main_window") == 0)    return "ui_menu_options_dlg";
+        if (stricmp(sub, "opt_buttons_frame") == 0)  return "ui_brokenline_back";
+        if (stricmp(sub, "background") == 0)         return "ui_menu_options_dlg";
+        if (stricmp(sub, "main_window_small") == 0)  return "ui_menu_options_dlg";
+        if (stricmp(sub, "servers_list_frame") == 0) return "ui_tablist_textbox";
+        if (stricmp(sub, "picture_window") == 0)     return "ui_tablist_textbox";
+        if (stricmp(sub, "empty_frameline_15") == 0) return "ui_brokenline_back";
+        if (stricmp(sub, "back_01") == 0)            return "ui_menu_options_dlg";
+        if (stricmp(sub, "back_02") == 0)            return "ui_menu_options_dlg";
+        if (stricmp(sub, "back_03") == 0)            return "ui_menu_options_dlg";
+        if (stricmp(sub, "load_info") == 0)          return "ui_tablist_textbox";
+        if (stricmp(sub, "left_widepanel") == 0)     return "ui_menu_options_dlg";
+        if (stricmp(sub, "right_widepanel") == 0)    return "ui_menu_options_dlg";
+    }
+
+    return nullptr;
+}
+
 bool CUITextureMaster::InitTexture(
     const shared_str& texture_name, const shared_str& shader_name, ui_shader& out_shader, Frect& out_rect)
 {
     xr_map<shared_str, TEX_INFO>::iterator it = m_textures.find(texture_name);
+    if (it == m_textures.end())
+    {
+        if (pcstr fb = GetTextureFallback(texture_name.c_str()))
+            it = m_textures.find(fb);
+    }
+
     if (it != m_textures.end())
     {
         sh_pair p = {it->second.file, shader_name};
@@ -125,6 +230,12 @@ bool CUITextureMaster::InitTexture(
 bool CUITextureMaster::InitTexture(const shared_str& texture_name, CUIStaticItem* tc, const shared_str& shader_name)
 {
     xr_map<shared_str, TEX_INFO>::iterator it = m_textures.find(texture_name);
+    if (it == m_textures.end())
+    {
+        if (pcstr fb = GetTextureFallback(texture_name.c_str()))
+            it = m_textures.find(fb);
+    }
+
     if (it != m_textures.end())
     {
         sh_pair p = {it->second.file, shader_name};
@@ -214,6 +325,16 @@ bool CUITextureMaster::FindItem(const shared_str& texture_name, pcstr default_te
         return true;
     }
 
+    if (pcstr fb = GetTextureFallback(texture_name.c_str()))
+    {
+        it = m_textures.find(fb);
+        if (it != m_textures.end())
+        {
+            outValue = it->second;
+            return true;
+        }
+    }
+
     it = m_textures.find(default_texture);
     if (it != m_textures.end())
     {
@@ -226,13 +347,28 @@ bool CUITextureMaster::FindItem(const shared_str& texture_name, pcstr default_te
 
 bool CUITextureMaster::ItemExist(const shared_str& texture_name)
 {
-    const auto it = m_textures.find(texture_name);
-    return it != m_textures.end();
+    auto it = m_textures.find(texture_name);
+    if (it != m_textures.end())
+        return true;
+
+    if (pcstr fb = GetTextureFallback(texture_name.c_str()))
+    {
+        it = m_textures.find(fb);
+        if (it != m_textures.end())
+            return true;
+    }
+
+    return false;
 }
 
 void CUITextureMaster::GetTextureShader(const shared_str& texture_name, ui_shader& sh)
 {
-    const auto it = m_textures.find(texture_name);
+    auto it = m_textures.find(texture_name);
+    if (it == m_textures.end())
+    {
+        if (pcstr fb = GetTextureFallback(texture_name.c_str()))
+            it = m_textures.find(fb);
+    }
     R_ASSERT3(it != m_textures.end(), "can't find texture", texture_name.c_str());
 
     sh->create("hud\\default", it->second.file.c_str());

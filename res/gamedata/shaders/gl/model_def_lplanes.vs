@@ -13,7 +13,7 @@ v2p _main (v_model v)
 	float3  dir_v 	= normalize		(mul(m_WV,v.P));
 	float3 	norm_v 	= normalize 		(mul(m_WV,v.N));
 	float 	fade 	= abs			(dot(dir_v,norm_v));
-	o.c0		= float3(fade);
+	o.c0		= float4(fade);
 
 	return o;
 }

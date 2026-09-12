@@ -145,7 +145,10 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
         Msg("* OpenGL: S3TC/DXT texture compression supported: %s", s_has_s3tc ? "yes" : "no");
     }
 
-    if (!s_has_s3tc && gli::is_compressed(texture.format()) && gli::has_decoder(texture.format()))
+    // TEMP DIAG: "-forcecpudxt" forces the software decode path to tell HW
+    // upload issues apart from data issues (remove after diagnosis).
+    static const bool s_force_cpu = (strstr(Core.Params, "-forcecpudxt") != nullptr);
+    if ((s_force_cpu || !s_has_s3tc) && gli::is_compressed(texture.format()) && gli::has_decoder(texture.format()))
     {
 #ifdef DEBUG
         Msg("* OpenGL: Decompressing texture '%s' on CPU -> RGBA8", fn);
@@ -180,8 +183,42 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
     gli::gl GL(gli::gl::PROFILE_GL33);
 #endif
 
+    // TEMP DIAG: dump decoded menu background to TGA to verify CPU decode.
+    if (strstr(fn, "ui_mainmenu"))
+    {
+        glm::tvec3<GLsizei> const dext(texture.extent(0));
+        const u8* src = (const u8*)texture.data(0, 0, 0);
+        string_path dump_path;
+        FS.update_path(dump_path, "$logs$", "texdump_ui_mainmenu.tga");
+        IWriter* wr = FS.w_open(dump_path);
+        if (wr && src && dext.x > 0 && dext.y > 0)
+        {
+            wr->w_u8(0); wr->w_u8(0); wr->w_u8(2);
+            wr->w_u16(0); wr->w_u16(0); wr->w_u8(0);
+            wr->w_u16(0); wr->w_u16(0);
+            wr->w_u16((u16)dext.x); wr->w_u16((u16)dext.y);
+            wr->w_u8(32); wr->w_u8(0x28);
+            for (int y = 0; y < dext.y; ++y)
+                for (int x = 0; x < dext.x; ++x)
+                {
+                    const u8* px = src + (size_t)(y * dext.x + x) * 4;
+                    wr->w_u8(px[2]); wr->w_u8(px[1]); wr->w_u8(px[0]); wr->w_u8(px[3]);
+                }
+            Msg(">>> [glTexture] dumped '%s' to %s", fn, dump_path);
+        }
+        if (wr) FS.w_close(wr);
+    }
+
     gli::gl::format const format = GL.translate(texture.format(), texture.swizzles());
     GLenum target = GL.translate(texture.target());
+
+    // TEMP DIAG: log detected format mapping to chase DXT artifacts.
+    {
+        glm::tvec3<GLsizei> const ext0(texture.extent(0));
+        Msg(">>> [glTexture] '%s': gli_format=%d compressed=%d levels=%u extent=%dx%d internal=0x%X",
+            fn, (int)texture.format(), (int)gli::is_compressed(texture.format()),
+            (unsigned)texture.levels(), (int)ext0.x, (int)ext0.y, (unsigned)format.Internal);
+    }
 
     glGenTextures(1, &pTexture);
     glBindTexture(target, pTexture);

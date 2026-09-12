@@ -153,6 +153,8 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     OpenGLVersionString = reinterpret_cast<pcstr>(glGetString(GL_VERSION));
     ShadingVersion = reinterpret_cast<pcstr>(glGetString(GL_SHADING_LANGUAGE_VERSION));
 
+    Msg("* [GLES] Active Renderer: [%s]", AdapterName ? AdapterName : "Unknown");
+    Msg("* [GLES] Active Vendor: [%s]", glGetString(GL_VENDOR) ? reinterpret_cast<pcstr>(glGetString(GL_VENDOR)) : "Unknown");
     Msg("* GPU vendor: [%s] device: [%s]", glGetString(GL_VENDOR), AdapterName);
     Msg("* GPU OpenGL version: %s", OpenGLVersionString);
     Msg("* GPU OpenGL shading language version: %s", ShadingVersion);

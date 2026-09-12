@@ -48,6 +48,11 @@ float2 unpack_tc_base( float2 tc, float du, float dv )
 	return (tc.xy + float2	(du,dv))*(32.0/32768.0); //!Increase from 32bit to 64bit floating point
 }
 
+float2 unpack_tc_base( int2 tc, float du, float dv )
+{
+	return (float2(tc) + float2(du,dv))*(32.0/32768.0);
+}
+
 float3 calc_sun_r1( float3 norm_w )    
 {
 	return L_sun_color*saturate(dot((norm_w),-L_sun_dir_w));                 

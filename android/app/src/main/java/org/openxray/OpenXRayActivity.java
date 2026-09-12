@@ -47,6 +47,27 @@ public class OpenXRayActivity extends SDLActivity {
 
     @Override
     public void loadLibraries() {
+        Intent intent = getIntent();
+        String backend = (intent != null && intent.hasExtra("extra_render_backend"))
+            ? intent.getStringExtra("extra_render_backend")
+            : "native";
+
+        if ("angle_vulkan".equalsIgnoreCase(backend) || "angle_gles".equalsIgnoreCase(backend)) {
+            AppLog.i("Libraries", "Preloading ANGLE native libraries for " + backend + "...");
+            try {
+                org.libsdl.app.SDL.loadLibrary("EGL_angle", this);
+                AppLog.i("Libraries", "  -> Preloaded libEGL_angle.so successfully");
+            } catch (Throwable t) {
+                AppLog.w("Libraries", "  -> Note: libEGL_angle.so preload: " + t.getMessage());
+            }
+            try {
+                org.libsdl.app.SDL.loadLibrary("GLESv2_angle", this);
+                AppLog.i("Libraries", "  -> Preloaded libGLESv2_angle.so successfully");
+            } catch (Throwable t) {
+                AppLog.w("Libraries", "  -> Note: libGLESv2_angle.so preload: " + t.getMessage());
+            }
+        }
+
         String[] libs = getLibraries();
         AppLog.i("Libraries", "Starting native library loading (" + libs.length + " libraries)...");
 
@@ -133,6 +154,12 @@ public class OpenXRayActivity extends SDLActivity {
         String[] args = getArguments();
         AppLog.i("Activity", "Launch arguments: " + Arrays.toString(args));
 
+        String renderBackend = (intent != null && intent.hasExtra("extra_render_backend"))
+            ? intent.getStringExtra("extra_render_backend")
+            : "native";
+        AppLog.i("Activity", "Selected render backend: " + renderBackend);
+        configureRenderBackend(renderBackend);
+
         super.onCreate(savedInstanceState);
 
         hideSystemUI();
@@ -141,6 +168,71 @@ public class OpenXRayActivity extends SDLActivity {
         setupTouchControls();
 
         AppLog.i("Activity", "OpenXRayActivity onCreate finished successfully");
+    }
+
+    private String findNativeLib(String libName) {
+        try {
+            String appLibDir = getApplicationInfo().nativeLibraryDir;
+            if (appLibDir != null) {
+                File f = new File(appLibDir, libName);
+                if (f.exists()) {
+                    AppLog.i("RenderBackend", "Found " + libName + " in app nativeLibraryDir: " + f.getAbsolutePath());
+                    return f.getAbsolutePath();
+                }
+            }
+        } catch (Exception ignored) {}
+
+        String[] systemDirs = {
+            "/apex/com.android.angle/lib64",
+            "/system/lib64/egl",
+            "/vendor/lib64/egl"
+        };
+        for (String dir : systemDirs) {
+            File f = new File(dir, libName);
+            if (f.exists()) {
+                AppLog.i("RenderBackend", "Found " + libName + " in system path: " + f.getAbsolutePath());
+                return f.getAbsolutePath();
+            }
+        }
+        return null;
+    }
+
+    private void configureRenderBackend(String backend) {
+        if ("angle_vulkan".equalsIgnoreCase(backend) || "angle_gles".equalsIgnoreCase(backend)) {
+            // NOTE: valid ANGLE_DEFAULT_PLATFORM values are vulkan/gl/d3d11/metal/null.
+            // On Android, "gl" selects the native OpenGL ES backend (EGL_PLATFORM_ANGLE_TYPE_OPENGLES_ANGLE).
+            String platform = "angle_vulkan".equalsIgnoreCase(backend) ? "vulkan" : "gl";
+            AppLog.i("RenderBackend", ">>> Configuring ANGLE (" + platform + " backend) <<<");
+
+            String eglPath = findNativeLib("libEGL_angle.so");
+            String glesPath = findNativeLib("libGLESv2_angle.so");
+
+            if (eglPath != null && glesPath != null) {
+                try {
+                    android.system.Os.setenv("SDL_VIDEO_EGL_DRIVER", eglPath, true);
+                    android.system.Os.setenv("SDL_VIDEO_GL_DRIVER", glesPath, true);
+                    android.system.Os.setenv("ANGLE_DEFAULT_PLATFORM", platform, true);
+                    AppLog.i("RenderBackend", "Environment configured for ANGLE: EGL=" + eglPath + ", GLES=" + glesPath + ", PLATFORM=" + platform);
+                } catch (Exception e) {
+                    AppLog.e("RenderBackend", "Failed to set environment variables for ANGLE: " + e.getMessage(), e);
+                }
+            } else {
+                AppLog.e("RenderBackend", "ANGLE libraries (libEGL_angle.so / libGLESv2_angle.so) not found in APK or system! Falling back to Native OpenGLES.");
+                runOnUiThread(() -> Toast.makeText(this, "ANGLE libraries not found in APK. Using Native OpenGLES.", Toast.LENGTH_LONG).show());
+                try {
+                    android.system.Os.unsetenv("SDL_VIDEO_EGL_DRIVER");
+                    android.system.Os.unsetenv("SDL_VIDEO_GL_DRIVER");
+                    android.system.Os.unsetenv("ANGLE_DEFAULT_PLATFORM");
+                } catch (Exception ignored) {}
+            }
+        } else {
+            AppLog.i("RenderBackend", ">>> Using Native OpenGLES backend (system driver) <<<");
+            try {
+                android.system.Os.unsetenv("SDL_VIDEO_EGL_DRIVER");
+                android.system.Os.unsetenv("SDL_VIDEO_GL_DRIVER");
+                android.system.Os.unsetenv("ANGLE_DEFAULT_PLATFORM");
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override
@@ -243,13 +335,20 @@ public class OpenXRayActivity extends SDLActivity {
                 boolean created = dir.mkdirs();
                 AppLog.i("FileSystem", "Created target directory: " + created);
             }
-            AppLog.i("FileSystem", "Extracting assets to: " + new File(dir, "gamedata").getAbsolutePath());
-            extractAssetFolder("gamedata", new File(dir, "gamedata"));
+            String[] gamedataAssets = getAssets().list("gamedata");
+            if (gamedataAssets != null && gamedataAssets.length > 0) {
+                AppLog.i("FileSystem", "Extracting assets to: " + new File(dir, "gamedata").getAbsolutePath());
+                extractAssetFolder("gamedata", new File(dir, "gamedata"));
+            } else {
+                AppLog.i("FileSystem", "No gamedata in APK assets, using external gamedata.");
+            }
             File targetFsgame = new File(dir, "fsgame.ltx");
             if (!targetFsgame.exists()) {
-                extractAssetFolder("fsgame.ltx", targetFsgame);
+                try {
+                    extractAssetFolder("fsgame.ltx", targetFsgame);
+                } catch (Exception ignored) {}
             }
-            AppLog.i("FileSystem", "Asset extraction finished.");
+            AppLog.i("FileSystem", "Asset check finished.");
         } catch (Exception e) {
             AppLog.e("FileSystem", "Error creating game directories / extracting assets: " + e.getMessage(), e);
         }

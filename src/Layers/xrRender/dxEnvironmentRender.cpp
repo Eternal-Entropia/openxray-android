@@ -380,9 +380,12 @@ void dxEnvironmentRender::OnDeviceCreate()
             tclouds1_tstage = C->samp.index;
     }
 
-    const bool r2 = RImplementation.GenerationIsR2OrHigher();
-    tonemap_tstage_2sky = sh_2sky->E[0]->passes[0]->T->find_texture_stage(r2_RT_luminance_cur, r2);
-    tonemap_tstage_clouds = clouds_sh->E[0]->passes[0]->T->find_texture_stage(r2_RT_luminance_cur, r2);
+    // NOTE: don't warn/fail when the tonemap stage is absent. The GL shaders
+    // legitimately omit the s_tonemap sampler under USE_VTF (see sky2.ps and
+    // clouds.ps); lerp() already skips u32(-1) stages. Failing here would
+    // abort startup on any VTF-capable GLES device.
+    tonemap_tstage_2sky = sh_2sky->E[0]->passes[0]->T->find_texture_stage(r2_RT_luminance_cur, false);
+    tonemap_tstage_clouds = clouds_sh->E[0]->passes[0]->T->find_texture_stage(r2_RT_luminance_cur, false);
 }
 
 void dxEnvironmentRender::OnDeviceDestroy()

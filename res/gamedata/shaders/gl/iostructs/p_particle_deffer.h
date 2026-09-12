@@ -1,8 +1,8 @@
 
-out vec4 SV_Target0;
-out vec4 SV_Target1;
+layout(location = 0) out vec4 SV_Target0;
+layout(location = 1) out vec4 SV_Target1;
 #ifndef GBUFFER_OPTIMIZATION
-out vec4 SV_Target2;
+layout(location = 2) out vec4 SV_Target2;
 #endif
 #ifdef EXTEND_F_DEFFER
 out int gl_SampleMask[];

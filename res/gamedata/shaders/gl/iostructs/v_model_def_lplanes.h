@@ -4,7 +4,7 @@ out gl_PerVertex { vec4 gl_Position; };
 struct v2p
 {
 	float2 tc0	; // TEXCOORD0;		// base
-	float3 c0	; // COLOR0;		// color
+	float4 c0	; // COLOR0;		// color (float4 to match base_lplanes.ps which reads .a)
 	float4 hpos	; // SV_Position;
 };
 
@@ -32,7 +32,7 @@ layout(location = TEXCOORD1)		in float4	v_model_ind		; // (x=m-index0, y=m-index
 
 
 layout(location = TEXCOORD0)		out float2	v2p_model_tc0		; // TEXCOORD0;		// base
-layout(location = COLOR0)		out float3	v2p_model_c0		; // COLOR0;		// color
+layout(location = COLOR0)		out float4	v2p_model_c0		; // COLOR0;		// color
 
 v2p _main ( v_model v );
 

@@ -21,6 +21,8 @@ target_sources(xrImGui PRIVATE
 target_include_directories(xrImGui
     PUBLIC
     "${IMGUI_DIR}"
+    PRIVATE
+    "${CMAKE_SOURCE_DIR}/sdk/include"
 )
 
 if (ANDROID)
