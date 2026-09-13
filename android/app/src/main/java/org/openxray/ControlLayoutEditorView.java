@@ -212,6 +212,8 @@ public class ControlLayoutEditorView extends View {
         if ("lmb_left".equals(id)) return "LMB (Claw)";
         if ("r".equals(id)) return "R (Reload)";
         if ("f".equals(id)) return "F (Use)";
+        if ("ammo".equals(id)) return "AMMO (Next ammo type)";
+        if ("gl".equals(id)) return "GL (Grenade launcher)";
         if ("jump".equals(id)) return "JUMP";
         if ("crouch".equals(id)) return "CROUCH";
         if ("shift".equals(id)) return "SHIFT";
@@ -240,6 +242,8 @@ public class ControlLayoutEditorView extends View {
         if ("rmb_main".equals(id)) return "RMB";
         if ("r".equals(id)) return "R";
         if ("f".equals(id)) return "F";
+        if ("ammo".equals(id)) return "AMMO";
+        if ("gl".equals(id)) return "GL";
         if ("jump".equals(id)) return "JUMP";
         if ("crouch".equals(id)) return "CROUCH";
         if ("shift".equals(id)) return "SHIFT";
@@ -316,7 +320,7 @@ public class ControlLayoutEditorView extends View {
             } else if ("q".equals(id) || "e".equals(id)) {
                 mButtonPaint.setColor(Color.argb(190, 48, 25, 65));
                 mButtonStrokePaint.setColor(Color.argb(240, 180, 105, 245));
-            } else if (id.startsWith("wpn_")) {
+            } else if (id.startsWith("wpn_") || "ammo".equals(id) || "gl".equals(id)) {
                 mButtonPaint.setColor(Color.argb(190, 24, 24, 28));
                 mButtonStrokePaint.setColor(Color.argb(220, 240, 170, 40));
             } else {

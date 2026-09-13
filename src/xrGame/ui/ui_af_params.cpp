@@ -126,7 +126,8 @@ void CUIArtefactParams::SetInfo(const CInventoryItem& pInvItem)
     const auto& af_section = pInvItem.object().cNameSect().c_str();
     const auto& actor_sect = actor->cNameSect().c_str();
     const auto& condition_sect = pSettings->read_if_exists<pcstr>(actor_sect, "condition_sect", actor_sect);
-    const auto& hit_absorbation_sect = pSettings->r_string(af_section, "hit_absorbation_sect");
+    const shared_str hit_absorbation_sect =
+        READ_IF_EXISTS(pSettings, r_string, af_section, "hit_absorbation_sect", nullptr);
 
     float h = 0.0f;
     if (m_Prop_line)
@@ -156,21 +157,23 @@ void CUIArtefactParams::SetInfo(const CInventoryItem& pInvItem)
         if (!m_restore_item[id])
             continue;
 
-        float val = pSettings->r_float(af_section, restore_section);
+        float val = pSettings->read_if_exists<float>(af_section, restore_section, 0.f);
         if (fis_zero(val))
             continue;
 
         val = val * pInvItem.GetCondition();
         if (is_soc)
         {
-            const float max_val = pSettings->r_float(condition_sect, actor_condition);
-            val /= max_val;
+            const float max_val = pSettings->read_if_exists<float>(condition_sect, actor_condition, 1.f);
+            if (!fis_zero(max_val))
+                val /= max_val;
         }
         setValue(m_restore_item[id], val);
     }
 
     CHitImmunity immunities;
-    immunities.LoadImmunities(hit_absorbation_sect, pSettings, is_soc);
+    if (hit_absorbation_sect.size() && pSettings->section_exist(hit_absorbation_sect))
+        immunities.LoadImmunities(hit_absorbation_sect.c_str(), pSettings, is_soc);
 
     for (auto [id, immunity_section, immunity_caption, magnitude, sign_inverse, unit] : af_immunity)
     {
@@ -192,7 +195,8 @@ void CUIArtefactParams::SetInfo(const CInventoryItem& pInvItem)
 
     if (m_additional_weight)
     {
-        float val = pSettings->r_float(af_section, "additional_inventory_weight");
+        // В SOC этого поля нет у большинства артефактов (в т.ч. Медузы) — r_float крашил инвентарь/пояс.
+        float val = pSettings->read_if_exists<float>(af_section, "additional_inventory_weight", 0.f);
         if (!fis_zero(val))
         {
             val *= pInvItem.GetCondition();

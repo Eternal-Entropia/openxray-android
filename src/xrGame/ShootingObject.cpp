@@ -67,10 +67,9 @@ void CShootingObject::Light_Create()
 {
     // lights
     light_render = GEnv.Render->light_create();
-    if (GEnv.Render->GenerationIsR2OrHigher())
-        light_render->set_shadow(true);
-    else
-        light_render->set_shadow(false);
+    // Muzzle-flash lights must never cast shadows: on mobile/GLES (RGL) a shadow-casting
+    // dynamic light is culled / breaks the forward fallback and the flash becomes invisible.
+    light_render->set_shadow(false);
 }
 
 void CShootingObject::Light_Destroy() { light_render.destroy(); }
@@ -197,7 +196,7 @@ void CShootingObject::Light_Render(const Fvector& P)
 void CShootingObject::StartParticles(
     CParticlesObject*& pParticles, LPCSTR particles_name, const Fvector& pos, const Fvector& vel, bool auto_remove_flag)
 {
-    if (!particles_name)
+    if (!particles_name || !particles_name[0])
         return;
 
     if (pParticles != NULL)
@@ -207,6 +206,8 @@ void CShootingObject::StartParticles(
     }
 
     pParticles = CParticlesObject::Create(particles_name, (BOOL)auto_remove_flag);
+    if (!pParticles)
+        return;
 
     UpdateParticles(pParticles, pos, vel);
     CSpectator* tmp_spectr = smart_cast<CSpectator*>(Level().CurrentControlEntity());
@@ -288,6 +289,8 @@ void CShootingObject::OnShellDrop(const Fvector& play_pos, const Fvector& parent
         return;
 
     CParticlesObject* pShellParticles = CParticlesObject::Create(m_sShellParticles.c_str(), TRUE);
+    if (!pShellParticles)
+        return;
 
     Fmatrix particles_pos;
     particles_pos.set(get_ParticlesXFORM());
@@ -324,6 +327,8 @@ void CShootingObject::StartFlameParticles()
 
     StopFlameParticles();
     m_pFlameParticles = CParticlesObject::Create(m_sFlameParticlesCurrent.c_str(), FALSE);
+    if (!m_pFlameParticles)
+        return;
     UpdateFlameParticles();
 
     CSpectator* tmp_spectr = smart_cast<CSpectator*>(Level().CurrentControlEntity());
@@ -357,7 +362,8 @@ void CShootingObject::UpdateFlameParticles()
     pos.set(get_ParticlesXFORM());
     pos.c.set(get_CurrentFirePoint());
 
-    VERIFY(_valid(pos));
+    if (!_valid(pos))
+        return;
 
     m_pFlameParticles->SetXFORM(pos);
 

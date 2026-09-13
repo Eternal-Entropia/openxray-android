@@ -78,6 +78,9 @@ public class TouchLayoutConfig {
         // 4. Action buttons (Right side)
         ld.buttons.put("r", new ButtonPos("r", 0.91f, 0.63f, baseRadius * 0.90f));
         ld.buttons.put("f", new ButtonPos("f", 0.81f, 0.68f, baseRadius * 0.90f));
+        // Переключение типа патронов (wpn_next, клавиша Y) и подствола (wpn_func, клавиша V)
+        ld.buttons.put("ammo", new ButtonPos("ammo", 0.72f, 0.68f, smallRadius * 1.10f));
+        ld.buttons.put("gl", new ButtonPos("gl", 0.64f, 0.68f, smallRadius * 1.10f));
         ld.buttons.put("jump", new ButtonPos("jump", 0.92f, 0.44f, baseRadius * 0.95f));
         ld.buttons.put("crouch", new ButtonPos("crouch", 0.82f, 0.50f, baseRadius * 0.95f));
         ld.buttons.put("shift", new ButtonPos("shift", 0.72f, 0.50f, baseRadius * 0.95f));

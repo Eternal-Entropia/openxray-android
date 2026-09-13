@@ -327,6 +327,11 @@ public class TouchOverlayView extends View {
         // 3. Gameplay Buttons (Right Side)
         addButtonFromConfig(layout, "r", "R", KeyEvent.KEYCODE_R, TYPE_DEFAULT);
         addButtonFromConfig(layout, "f", "F", KeyEvent.KEYCODE_F, TYPE_DEFAULT);
+        // Смена типа патронов (wpn_next) и переключение подствола (wpn_func).
+        // В ванильном SoC это клавиши Y и V; движок также прописывает их как
+        // fallback-б bindings, так что кнопки работают даже если в user.ltx нет биндов.
+        addButtonFromConfig(layout, "ammo", "AMMO", KeyEvent.KEYCODE_Y, TYPE_WEAPON);
+        addButtonFromConfig(layout, "gl", "GL", KeyEvent.KEYCODE_V, TYPE_WEAPON);
         addButtonFromConfig(layout, "jump", "JUMP", KeyEvent.KEYCODE_SPACE, TYPE_DEFAULT);
         addButtonFromConfig(layout, "crouch", "CROUCH", KeyEvent.KEYCODE_CTRL_LEFT, TYPE_DEFAULT);
         addButtonFromConfig(layout, "shift", "SHIFT", KeyEvent.KEYCODE_SHIFT_LEFT, TYPE_DEFAULT);

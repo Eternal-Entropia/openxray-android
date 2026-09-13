@@ -470,6 +470,20 @@ void CScriptGameObject::TransferItem(CScriptGameObject* pItem, CScriptGameObject
         return;
     }
 
+    // Квестовый трансфер (медуза Сидоровичу): на таче диалог легко нажать дважды —
+    // второй вызов приходил уже без предмета у дарителя и ронял инвентарь.
+    if (const auto giver_owner = smart_cast<CInventoryOwner*>(&object()))
+    {
+        bool owned = giver_owner->inventory().InRuck(pIItem)
+            || giver_owner->inventory().InBelt(pIItem)
+            || giver_owner->inventory().InSlot(pIItem);
+        if (!owned)
+        {
+            GEnv.ScriptEngine->script_log(LuaMessageType::Error, "cannot transfer item: giver does not own it");
+            return;
+        }
+    }
+
     // выбросить у себя
     NET_Packet P;
     CGameObject::u_EventGen(P, GE_TRADE_SELL, object().ID());

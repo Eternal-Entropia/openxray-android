@@ -331,7 +331,8 @@ u32 CAI_Trader::ArtefactPrice(CArtefact* pArtefact) { return pArtefact->Cost(); 
 //продажа артефакта, с последуещим изменением списка заказов (true - если артефакт был в списке)
 bool CAI_Trader::BuyArtefact(CArtefact* pArtefact)
 {
-    VERIFY(pArtefact);
+    if (!pArtefact)
+        return false;
     return false;
 }
 

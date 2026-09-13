@@ -986,6 +986,11 @@ class CCC_DefControls : public CCC_UnBindAll
         { kCROUCH_TOGGLE,           { SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_B } },
         { kWPN_RELOAD,              { SDL_SCANCODE_R,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_X } },
         { kUSE,                     { SDL_SCANCODE_F,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_Y } },
+        // Сенсорные кнопки AMMO/GL шлют Y/V. Fallback-бинды, чтобы смена патронов
+        // (wpn_next) и подствол (wpn_func) работали из коробки, даже если в
+        // default_controls.ltx / user.ltx этих биндов нет (типично для портов).
+        { kWPN_NEXT,                { SDL_SCANCODE_Y,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_INVALID } },
+        { kWPN_FUNC,                { SDL_SCANCODE_V,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_INVALID } },
 
         { kTORCH,                   { SDL_SCANCODE_L,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_RIGHTSTICK } },
         { kSCORES,                  { SDL_SCANCODE_TAB,     SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_LEFTSTICK } },

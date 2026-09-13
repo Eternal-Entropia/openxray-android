@@ -1846,21 +1846,28 @@ void CActor::OnItemBelt(CInventoryItem* inventory_item, const SInvItemPlace& pre
 
 void CActor::MoveArtefactBelt(const CArtefact* artefact, bool on_belt)
 {
-    VERIFY(artefact);
+    if (!artefact)
+        return;
 
     if (on_belt)
     {
-        VERIFY(m_ArtefactsOnBelt.end() == std::find(m_ArtefactsOnBelt.begin(), m_ArtefactsOnBelt.end(), artefact));
+        // На таче событие Item2Belt может прийти дважды (даблтап) — без проверки VERIFY крашил игру.
+        if (m_ArtefactsOnBelt.end() != std::find(m_ArtefactsOnBelt.begin(), m_ArtefactsOnBelt.end(), artefact))
+            return;
         m_ArtefactsOnBelt.push_back(artefact);
     }
     else
     {
         auto it = std::remove(m_ArtefactsOnBelt.begin(), m_ArtefactsOnBelt.end(), artefact);
-        VERIFY(it != m_ArtefactsOnBelt.end());
-        m_ArtefactsOnBelt.erase(it);
+        if (it == m_ArtefactsOnBelt.end())
+            return;
+        m_ArtefactsOnBelt.erase(it, m_ArtefactsOnBelt.end());
     }
-    if (Level().CurrentViewEntity() && Level().CurrentViewEntity() == this && CurrentGameUI()->UIMainIngameWnd->UIArtefactPanel)
-        CurrentGameUI()->UIMainIngameWnd->UIArtefactPanel->InitIcons(m_ArtefactsOnBelt);
+    if (!Level().CurrentViewEntity() || Level().CurrentViewEntity() != this)
+        return;
+    if (!CurrentGameUI() || !CurrentGameUI()->UIMainIngameWnd || !CurrentGameUI()->UIMainIngameWnd->UIArtefactPanel)
+        return;
+    CurrentGameUI()->UIMainIngameWnd->UIArtefactPanel->InitIcons(m_ArtefactsOnBelt);
 }
 
 #define ARTEFACTS_UPDATE_TIME 0.100f

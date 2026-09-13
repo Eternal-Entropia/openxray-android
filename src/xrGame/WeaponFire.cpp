@@ -138,7 +138,10 @@ void CWeapon::FireEnd()
 
 void CWeapon::StartFlameParticles2()
 {
+    if (0 == m_sFlameParticles2.size())
+        return;
     CShootingObject::StartParticles(m_pFlameParticles2, m_sFlameParticles2.c_str(), get_LastFP2());
+    UpdateFlameParticles2();
 }
 void CWeapon::StopFlameParticles2() { CShootingObject::StopParticles(m_pFlameParticles2); }
 void CWeapon::UpdateFlameParticles2()

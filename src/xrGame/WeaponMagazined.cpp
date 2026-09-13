@@ -631,6 +631,11 @@ void CWeaponMagazined::OnShot()
     // Animation
     PlayAnimShoot();
 
+    // Обновить firedeps ДО спавна эффектов, иначе вспышка/дым появляются
+    // в старой точке (на Android при низком FPS это выглядит как "нет искр").
+    ForceUpdateFireParticles();
+    UpdateFireDependencies();
+
     // Shell Drop
     Fvector vel;
     PHGetLinearVell(vel);
@@ -638,9 +643,11 @@ void CWeaponMagazined::OnShot()
 
     // Огонь из ствола
     StartFlameParticles();
+    // Продублировать позицию сразу после Play, чтобы однокадровая вспышка
+    // гарантированно оказалась в актуальном кадре выстрела.
+    UpdateFlameParticles();
 
     //дым из ствола
-    ForceUpdateFireParticles();
     StartSmokeParticles(get_LastFP(), vel);
 }
 

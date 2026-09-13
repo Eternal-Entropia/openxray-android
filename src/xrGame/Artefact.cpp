@@ -56,25 +56,32 @@ void CArtefact::Load(LPCSTR section)
     if (pSettings->line_exist(section, "particles"))
         m_sParticlesName = pSettings->r_string(section, "particles");
 
-    m_bLightsEnabled = !!pSettings->r_bool(section, "lights_enabled");
+    m_bLightsEnabled = pSettings->read_if_exists<bool>(section, "lights_enabled", false);
     if (m_bLightsEnabled)
     {
-        sscanf(pSettings->r_string(section, "trail_light_color"), "%f,%f,%f", &m_TrailLightColor.r,
-            &m_TrailLightColor.g, &m_TrailLightColor.b);
-        m_fTrailLightRange = pSettings->r_float(section, "trail_light_range");
+        if (pSettings->line_exist(section, "trail_light_color"))
+        {
+            sscanf(pSettings->r_string(section, "trail_light_color"), "%f,%f,%f", &m_TrailLightColor.r,
+                &m_TrailLightColor.g, &m_TrailLightColor.b);
+        }
+        else
+            m_TrailLightColor.set(1.f, 1.f, 1.f, 1.f);
+        m_fTrailLightRange = pSettings->read_if_exists<float>(section, "trail_light_range", 0.f);
     }
 
-    m_fHealthRestoreSpeed = pSettings->r_float(section, "health_restore_speed");
-    m_fRadiationRestoreSpeed = pSettings->r_float(section, "radiation_restore_speed");
-    m_fSatietyRestoreSpeed = pSettings->r_float(section, "satiety_restore_speed");
-    m_fPowerRestoreSpeed = pSettings->r_float(section, "power_restore_speed");
-    m_fBleedingRestoreSpeed = pSettings->r_float(section, "bleeding_restore_speed");
+    m_fHealthRestoreSpeed = pSettings->read_if_exists<float>(section, "health_restore_speed", 0.f);
+    m_fRadiationRestoreSpeed = pSettings->read_if_exists<float>(section, "radiation_restore_speed", 0.f);
+    m_fSatietyRestoreSpeed = pSettings->read_if_exists<float>(section, "satiety_restore_speed", 0.f);
+    m_fPowerRestoreSpeed = pSettings->read_if_exists<float>(section, "power_restore_speed", 0.f);
+    m_fBleedingRestoreSpeed = pSettings->read_if_exists<float>(section, "bleeding_restore_speed", 0.f);
 
-    if (pSettings->section_exist(pSettings->r_string(section, "hit_absorbation_sect")))
+    const shared_str absorb_sect =
+        READ_IF_EXISTS(pSettings, r_string, section, "hit_absorbation_sect", nullptr);
+    if (absorb_sect.size() && pSettings->section_exist(absorb_sect))
     {
         // SOC vs CS/COP are inverted, convert to CS/COP format.
         const bool is_soc = GMLib.GetLibraryVersion() <= GAMEMTL_VERSION_SOC;
-        m_ArtefactHitImmunities.LoadImmunities(pSettings->r_string(section, "hit_absorbation_sect"), pSettings, is_soc);
+        m_ArtefactHitImmunities.LoadImmunities(absorb_sect.c_str(), pSettings, is_soc);
     }
     m_bCanSpawnZone = !!pSettings->line_exist("artefact_spawn_zones", section);
     m_af_rank = pSettings->read_if_exists<u8>(section, "af_rank", 0);
@@ -255,11 +262,17 @@ void CArtefact::create_physic_shell()
 
 void CArtefact::StartLights()
 {
-    VERIFY(!physics_world()->Processing());
+    if (physics_world() && physics_world()->Processing())
+        return;
     if (!m_bLightsEnabled)
         return;
 
-    VERIFY(m_pTrailLight == NULL);
+    if (m_pTrailLight)
+    {
+        m_pTrailLight->set_position(Position());
+        m_pTrailLight->set_active(true);
+        return;
+    }
     m_pTrailLight = GEnv.Render->light_create();
     bool const b_light_shadow = pSettings->read_if_exists<bool>(cNameSect(), "idle_light_shadow", false);
 
@@ -273,7 +286,14 @@ void CArtefact::StartLights()
 
 void CArtefact::StopLights()
 {
-    VERIFY(!physics_world()->Processing());
+    if (physics_world() && physics_world()->Processing())
+    {
+        // Отложенная остановка: свет погаснет в UpdateLights, зато не будет краша
+        // при снятии/надевании артефакта во время физ. шага (тач-даблтап, скрипты).
+        if (m_pTrailLight)
+            m_pTrailLight->set_active(false);
+        return;
+    }
     if (!m_bLightsEnabled || !m_pTrailLight)
         return;
 
@@ -283,7 +303,8 @@ void CArtefact::StopLights()
 
 void CArtefact::UpdateLights()
 {
-    VERIFY(!physics_world()->Processing());
+    if (physics_world() && physics_world()->Processing())
+        return;
     if (!m_bLightsEnabled || !m_pTrailLight || !m_pTrailLight->get_active())
         return;
     m_pTrailLight->set_position(Position());

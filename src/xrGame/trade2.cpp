@@ -65,6 +65,10 @@ bool CTrade::CanTrade()
 
 void CTrade::TransferItem(CInventoryItem* pItem, bool bBuying, bool bFree /*= false*/)
 {
+    if (!pItem)
+        return;
+    if (!pThis.inv_owner || !pPartner.inv_owner)
+        return;
     // сумма сделки учитывая ценовой коэффициент
     // актер цену не говорит никогда, все делают за него
     u32 dwTransferMoney = GetItemPrice(pItem, bBuying, bFree);
@@ -114,7 +118,10 @@ void CTrade::TransferItem(CInventoryItem* pItem, bool bBuying, bool bFree /*= fa
         if (pArtefact)
         {
             pTrader = smart_cast<CAI_Trader*>(pThis.base);
-            m_bNeedToUpdateArtefactTasks |= pTrader->BuyArtefact(pArtefact);
+            // Сидорович и др. торговцы: без проверки краш, если base не трейдер
+            // (диалог во время смерти/ранены, либо квестовый трансфер медузы).
+            if (pTrader)
+                m_bNeedToUpdateArtefactTasks |= pTrader->BuyArtefact(pArtefact);
         }
     }
 
@@ -142,6 +149,9 @@ u32 CTrade::GetItemPrice(PIItem pItem, bool b_buying, bool bFree /*= false*/)
     if (bFree)
         return 0;
 
+    if (!pItem || !pThis.inv_owner || !pPartner.inv_owner)
+        return 0;
+
     CArtefact* pArtefact = smart_cast<CArtefact*>(pItem);
 
     // computing base_cost
@@ -149,8 +159,7 @@ u32 CTrade::GetItemPrice(PIItem pItem, bool b_buying, bool bFree /*= false*/)
     if (pArtefact && (pThis.type == TT_ACTOR) && (pPartner.type == TT_TRADER))
     {
         CAI_Trader* pTrader = smart_cast<CAI_Trader*>(pPartner.inv_owner);
-        VERIFY(pTrader);
-        base_cost = (float)pTrader->ArtefactPrice(pArtefact);
+        base_cost = pTrader ? (float)pTrader->ArtefactPrice(pArtefact) : (float)pItem->Cost();
     }
     else
         base_cost = (float)pItem->Cost();
