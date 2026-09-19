@@ -414,6 +414,13 @@ target_link_libraries(xrRender_GL
     xrImGui
 )
 
+if (ANDROID OR XRAY_USE_GLES)
+    target_compile_definitions(xrRender_GL
+        PRIVATE
+        XRAY_USE_GLES
+    )
+endif()
+
 if (ANDROID)
     target_link_libraries(xrRender_GL
         PRIVATE

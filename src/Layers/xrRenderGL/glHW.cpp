@@ -120,7 +120,7 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     int version;
     {
         ZoneScopedN("gladLoadGL");
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
         version = gladLoadGLES2(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
 #else
         version = gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
@@ -203,7 +203,7 @@ void CHW::SetPrimaryAttributes(u32& windowFlags)
 {
     windowFlags |= SDL_WINDOW_OPENGL;
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);

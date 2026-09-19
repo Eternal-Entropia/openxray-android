@@ -11,11 +11,7 @@
 #include <sys/utime.h>
 #elif defined(XR_PLATFORM_POSIX)
 #include <SDL.h>
-#if !defined(XR_PLATFORM_ANDROID)
-#include <glob.h>
-#else
 #include <dirent.h>
-#endif
 #endif
 
 #include "FS_internal.h"
@@ -708,7 +704,7 @@ bool CLocatorAPI::Recurse(pcstr path)
     if (!stat(scanPath, &buffer))
         return true;
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XR_PLATFORM_LINUX)
     DIR* dir = opendir(cleanPath);
     if (!dir)
         return false;
