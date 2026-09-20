@@ -372,8 +372,8 @@ int out_of_memory_handler(size_t size)
         const auto [ecoStringsBytes, ecoStringsCount] = g_pStringContainer->stat_economy();
         const size_t ecoSmem = g_pSharedMemoryContainer->stat_economy();
         Msg("* [x-ray]: process heap[%zu K]", processHeap / 1024);
-        Msg("* [x-ray]: shared strings: memory[%ld K], count[%lu]", ecoStringsBytes / 1024, ecoStringsCount);
-        Msg("* [x-ray]: shared memory[%ld K]", ecoSmem);
+        Msg("* [x-ray]: shared strings: memory[%zu K], count[%zu]", ecoStringsBytes / 1024, ecoStringsCount);
+        Msg("* [x-ray]: shared memory[%zu K]", ecoSmem);
     }
     xrDebug::Fatal(DEBUG_INFO, "Out of memory. Memory request: %zu K", size / 1024);
     return 1;
@@ -630,6 +630,16 @@ static void handler_base(const char* reason)
     xrDebug::Fail(ignoreAlways, DEBUG_INFO, nullptr, reason, nullptr, nullptr);
 }
 
+// Launchers (PortMaster, etc.) stop the game with SIGTERM when the user quits.
+// Routing that to handler_base would open a fatal-error dialog that can hang on
+// KMSDRM/Wayland handhelds; exit quietly instead (_Exit is async-signal-safe).
+#if !defined(XR_PLATFORM_WINDOWS) && !defined(XR_PLATFORM_ANDROID)
+static void sigterm_handler(int)
+{
+    _Exit(0);
+}
+#endif
+
 #if defined(XR_PLATFORM_WINDOWS)
 static void invalid_parameter_handler(const wchar_t* expression, const wchar_t* function, const wchar_t* file,
                                       unsigned int line, uintptr_t reserved)
@@ -668,7 +678,11 @@ void xrDebug::OnThreadSpawn()
     std::signal(SIGSEGV, +[](int signal) { handler_base("segmentation fault"); });
 #   endif
     std::signal(SIGABRT, +[](int signal) { handler_base("application is aborting"); });
+#if defined(XR_PLATFORM_WINDOWS) || defined(XR_PLATFORM_ANDROID)
     std::signal(SIGTERM, +[](int signal) { handler_base("termination with exit code 3"); });
+#else
+    std::signal(SIGTERM, sigterm_handler);
+#endif
 
 #   if defined(XR_PLATFORM_WINDOWS)
     std::signal(SIGABRT_COMPAT, +[](int signal) { handler_base("application is aborting"); });

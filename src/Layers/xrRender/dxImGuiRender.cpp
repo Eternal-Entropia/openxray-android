@@ -80,7 +80,13 @@ void dxImGuiRender::OnDeviceCreate(ImGuiContext* context)
 #if defined(USE_DX11)
     ImGui_ImplDX11_Init(HW.pDevice, HW.get_context(CHW::IMM_CTX_ID));
 #elif defined(USE_OGL)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+    // The desktop default (#version 130 with fixed client arrays) is not
+    // accepted by OpenGL ES. Use the ES GLSL profile (3.0+) + VBOs instead.
+    ImGui_ImplOpenGL3_Init("#version 300 es");
+#else
     ImGui_ImplOpenGL3_Init();
+#endif
 #endif
 }
 void dxImGuiRender::OnDeviceDestroy()

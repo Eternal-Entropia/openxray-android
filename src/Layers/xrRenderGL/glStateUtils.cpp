@@ -164,6 +164,14 @@ GLint ConvertTextureAddressMode(u32 Mode)
     case D3DTADDRESS_CLAMP:
         return (GLint)GL_CLAMP_TO_EDGE;
     case D3DTADDRESS_BORDER:
+        // GL_CLAMP_TO_BORDER and GL_TEXTURE_BORDER_COLOR are only part of the
+        // GLES 3.2 core. On GLES 3.0/3.1 drivers (e.g. Mesa Panfrost on
+        // Mali-G31) using them triggers GL_INVALID_ENUM every frame for shadow
+        // sampler states (D3DTADDRESS_BORDER), so fall back to edge clamp.
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+        if (!GLAD_GL_ES_VERSION_3_2)
+            return (GLint)GL_CLAMP_TO_EDGE;
+#endif
         return (GLint)GL_CLAMP_TO_BORDER;
         //case D3DTADDRESS_MIRRORONCE:
         //	return ;
