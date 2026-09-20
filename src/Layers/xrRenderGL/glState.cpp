@@ -53,7 +53,7 @@ void glState::Apply()
             {
                 CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_MIN_LOD, 0.f));
                 CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_MAX_LOD, FLT_MAX));
-#if !defined(XR_PLATFORM_ANDROID)
+#if !defined(XR_PLATFORM_ANDROID) && !defined(XRAY_USE_GLES)
                 CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, ps_r__tf_Mipbias));
 #endif
             }
@@ -254,7 +254,7 @@ void glState::UpdateSamplerState(u32 stage, u32 name, u32 value)
             value, currentFilter, true)));
         break;
     case D3DSAMP_MIPMAPLODBIAS: /* float Mipmap LOD bias */
-#if !defined(XR_PLATFORM_ANDROID)
+#if !defined(XR_PLATFORM_ANDROID) && !defined(XRAY_USE_GLES)
         CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, value));
 #endif
         break;

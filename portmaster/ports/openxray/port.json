@@ -1,0 +1,36 @@
+{
+  "version": 4,
+  "name": "openxray.zip",
+  "items": [
+    "OpenXRay.sh",
+    "openxray"
+  ],
+  "items_opt": [],
+  "attr": {
+    "title": "S.T.A.L.K.E.R.: OpenXRay",
+    "porter": [
+      "lesad710"
+    ],
+    "desc": "Open-source engine recreation for S.T.A.L.K.E.R. (Shadow of Chernobyl / Clear Sky / Call of Pripyat). Game data (gamedata + fsgame.ltx) is required and is not included.",
+    "desc_md": null,
+    "inst": "Place your S.T.A.L.K.E.R. game files (gamedata/ and fsgame.ltx) into the openxray folder.",
+    "inst_md": null,
+    "genres": [
+      "action",
+      "adventure"
+    ],
+    "image": null,
+    "rtr": false,
+    "exp": true,
+    "runtime": [],
+    "store": [],
+    "availability": "full",
+    "reqs": [
+      "S.T.A.L.K.E.R. game files"
+    ],
+    "arch": [
+      "aarch64"
+    ],
+    "min_glibc": ""
+  }
+}

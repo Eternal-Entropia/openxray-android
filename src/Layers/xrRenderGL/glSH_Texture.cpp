@@ -94,7 +94,7 @@ void CTexture::apply_theora(CBackend& cmd_list, u32 dwStage)
         u32 _h = pTheora->Height(true);
         int _pos = 0;
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
         // Direct CPU upload avoiding Adreno driver logcat spam ("CPU path taken to copy PBO ...") and extra copies
         thread_local xr_vector<u32> s_theora_cpu_buffer;
         if (s_theora_cpu_buffer.size() < _w * _h)
@@ -223,7 +223,7 @@ void CTexture::Load()
 
             ClearGLErrors();
 
-#if !defined(XR_PLATFORM_ANDROID)
+#if !defined(XR_PLATFORM_ANDROID) && !defined(XRAY_USE_GLES)
             glGenBuffers(1, &pBuffer);
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pBuffer);
             CHK_GL(glBufferData(GL_PIXEL_UNPACK_BUFFER, flags.MemoryUsage, nullptr, GL_STREAM_DRAW));
@@ -238,7 +238,7 @@ void CTexture::Load()
             CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
             CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
             CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
             CHK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _w, _h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
             CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE));
             CHK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED));

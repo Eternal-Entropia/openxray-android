@@ -113,7 +113,7 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
 
     u32 mip_cnt = u32(-1); // XXX: write to it when reading with GLI!
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     static bool s_has_s3tc = false;
     static bool s_s3tc_checked = false;
     if (!s_s3tc_checked)
@@ -177,7 +177,7 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
     }
 #endif
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     gli::gl GL(gli::gl::PROFILE_ES30);
 #else
     gli::gl GL(gli::gl::PROFILE_GL33);
@@ -231,7 +231,7 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     if (gli::gl::EXTERNAL_RED != format.External)
     {
         glTexParameteri(target, GL_TEXTURE_SWIZZLE_R, format.Swizzles[gli::SWIZZLE_RED]);

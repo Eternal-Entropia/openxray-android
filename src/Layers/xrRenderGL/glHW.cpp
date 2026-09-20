@@ -104,10 +104,28 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     Caps.fDepth = D3DFMT_D24S8;
 
     // Create the context
-    m_context = SDL_GL_CreateContext(m_window);
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+    // Some drivers (e.g. Mesa Panfrost on Mali-G31) only support OpenGL ES 3.1
+    // even though the hardware advertises 3.2. Try the highest version first
+    // and fall back to older ones.
+    m_context = nullptr;
+    constexpr int glesVersions[][2] = { {3, 2}, {3, 1}, {3, 0} };
+    for (const auto& version : glesVersions)
+    {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, version[0]);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, version[1]);
+        m_context = SDL_GL_CreateContext(m_window);
+        if (m_context != nullptr)
+        {
+            ESVersion = version[0] * 10 + version[1];
+            Msg("* OpenGL ES: created context version %d.%d", version[0], version[1]);
+            break;
+        }
+        Msg("! OpenGL: could not create OpenGL ES %d.%d context: %s", version[0], version[1], SDL_GetError());
+    }
     if (m_context == nullptr)
     {
-        Log("! OpenGL: could not create drawing context:", SDL_GetError());
+        Log("! OpenGL: could not create any OpenGL ES drawing context:", SDL_GetError());
         return;
     }
 
@@ -126,6 +144,26 @@ void CHW::CreateDevice(SDL_Window* hWnd)
         version = gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
 #endif
     }
+#else
+    m_context = SDL_GL_CreateContext(m_window);
+    if (m_context == nullptr)
+    {
+        Log("! OpenGL: could not create drawing context:", SDL_GetError());
+        return;
+    }
+
+    if (MakeContextCurrent(IRender::PrimaryContext) != 0)
+    {
+        Log("! OpenGL: could not make context current:", SDL_GetError());
+        return;
+    }
+
+    int version;
+    {
+        ZoneScopedN("gladLoadGL");
+        version = gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
+    }
+#endif
     if (version == 0)
     {
         Log("! OpenGL: could not initialize GLAD.");
