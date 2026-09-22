@@ -344,11 +344,10 @@ ICF void CBackend::Render(D3DPRIMITIVETYPE T, u32 baseV, u32 startV, u32 countV,
     stat.render.polys += PC;
     constants.flush();
 
-#if defined(XR_PLATFORM_ANDROID) || defined(XR_PLATFORM_ARM) || defined(XR_PLATFORM_ARM64)
-    constexpr bool use_emulated_basev = true;
-#else
+    // Prefer the real glDrawElementsBaseVertex: on OpenGL ES 3.2 contexts the
+    // GLAD loader provides it, while ES 3.0/3.1 fallback contexts leave the
+    // pointer null (emulated path). No need to force emulation on ARM.
     const bool use_emulated_basev = (glDrawElementsBaseVertex == nullptr);
-#endif
 
     if (baseV == 0)
     {
@@ -368,7 +367,7 @@ ICF void CBackend::Render(D3DPRIMITIVETYPE T, u32 baseV, u32 startV, u32 countV,
             {
                 u32 stride = vb_stride ? vb_stride : GetDeclVertexSize(decl->dcl_code.data(), 0);
                 CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
-                SetGLVertexPointer(decl, (size_t)baseV * stride);
+                SetGLVertexPointer(decl, static_cast<size_t>(baseV) * static_cast<size_t>(stride));
                 cached_baseV = baseV;
             }
             CHK_GL(glDrawElements(Topology, iIndexCount, GL_UNSIGNED_SHORT, (void*)(startI * sizeof(GLushort))));
