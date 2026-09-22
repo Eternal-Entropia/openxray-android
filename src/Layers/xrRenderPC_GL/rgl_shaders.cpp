@@ -657,6 +657,12 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
             {
                 CHK_GL(glGetProgramBinary(program, binaryLength, nullptr, &binaryFormat, binary));
                 IWriter* file = FS.w_open(full_path);
+                if (!file)
+                {
+                    Log("- Failed to open shader cache for writing:", filename);
+                    xr_free(binary);
+                    return S_OK; // fall back to in-memory program
+                }
 
                 file->w_string(HW.AdapterName);
                 file->w_string(HW.OpenGLVersionString);

@@ -704,13 +704,14 @@ bool CLocatorAPI::Recurse(pcstr path)
     if (!stat(scanPath, &buffer))
         return true;
 
+    size_t oldSize = rec_files.size();
+    size_t newSize = oldSize;
 #if defined(XR_PLATFORM_ANDROID) || defined(XR_PLATFORM_LINUX)
     DIR* dir = opendir(cleanPath);
     if (!dir)
         return false;
 
     rec_files.reserve(256);
-    size_t oldSize = rec_files.size();
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr)
     {
@@ -752,7 +753,9 @@ bool CLocatorAPI::Recurse(pcstr path)
             rec_files.push_back(findData);
     }
     closedir(dir);
-    size_t newSize = rec_files.size();
+    newSize = rec_files.size();
+#else
+    static_cast<void>(newSize);
 #endif
     if (newSize > oldSize)
     {
@@ -868,8 +871,18 @@ void CLocatorAPI::setup_fs_path(pcstr fs_name)
                     res = lstat(tmp, &statbuf);
                     if (res == 0)
                         xr_unlink(tmp);
+                    // Only link when the install tree is actually present on the device;
+                    // CMAKE_INSTALL_FULL_DATAROOTDIR is normally a build-machine path.
                     xr_sprintf(tmp_link, "%s/openxray/fsgame.ltx", install_dir);
-                    symlink(tmp_link, tmp);
+                    if (access(tmp_link, F_OK) == 0)
+                    {
+                        if (symlink(tmp_link, tmp) != 0)
+                            Msg("! Failed to symlink %s -> %s: %s", tmp, tmp_link, strerror(errno));
+                    }
+                    else
+                    {
+                        Msg("! Install tree fsgame.ltx missing at %s, game data may be unfindable.", tmp_link);
+                    }
                 }
                 xr_sprintf(tmp, "%sgamedata/shaders/gl", pref_path);
                 ZeroMemory(&statbuf, sizeof(statbuf));
@@ -886,7 +899,18 @@ void CLocatorAPI::setup_fs_path(pcstr fs_name)
                         mkdir("gamedata/shaders", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
                     }
                     xr_sprintf(tmp_link, "%s/openxray/gamedata/shaders/gl", install_dir);
-                    symlink(tmp_link, tmp);
+                    if (access(tmp_link, F_OK) == 0)
+                    {
+                        if (symlink(tmp_link, tmp) != 0)
+                            Msg("! Failed to symlink %s -> %s: %s", tmp, tmp_link, strerror(errno));
+                    }
+                    else
+                    {
+                        // The install tree is absent (e.g. a build-machine path); the
+                        // (empty) shaders dir we just created stays plain instead of
+                        // leaving a dangling symlink.
+                        Msg("! Install tree shaders missing at %s", tmp_link);
+                    }
                 }
 
                 SDL_strlcpy(full_current_directory, pref_path, sizeof full_current_directory);
