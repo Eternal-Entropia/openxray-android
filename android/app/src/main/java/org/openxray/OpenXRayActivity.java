@@ -335,17 +335,47 @@ public class OpenXRayActivity extends SDLActivity {
                 boolean created = dir.mkdirs();
                 AppLog.i("FileSystem", "Created target directory: " + created);
             }
-            String[] gamedataAssets = getAssets().list("gamedata");
+            // Game mode selected in launcher: soc / cs / cop.
+            String gameMode = "soc";
+            try {
+                Intent modeIntent = getIntent();
+                if (modeIntent != null && modeIntent.hasExtra("extra_game_mode")) {
+                    String m = modeIntent.getStringExtra("extra_game_mode");
+                    if ("cs".equals(m) || "cop".equals(m) || "soc".equals(m)) {
+                        gameMode = m;
+                    }
+                }
+            } catch (Exception ignored) {}
+            AppLog.i("FileSystem", "Game mode for res overlay: " + gameMode);
+
+            // res/ is split per game: res/soc/* for Shadow of Chernobyl,
+            // res/"cop and cs"/* for Clear Sky and Call of Pripyat.
+            String resBase = "cop and cs";
+            if ("soc".equals(gameMode)) {
+                resBase = "soc";
+            }
+            AppLog.i("FileSystem", "Res source folder: " + resBase);
+
+            String[] gamedataAssets = null;
+            try {
+                gamedataAssets = getAssets().list(resBase + "/gamedata");
+            } catch (Exception e) {
+                AppLog.w("FileSystem", "Res folder missing in APK: " + resBase);
+            }
             if (gamedataAssets != null && gamedataAssets.length > 0) {
                 AppLog.i("FileSystem", "Extracting assets to: " + new File(dir, "gamedata").getAbsolutePath());
-                extractAssetFolder("gamedata", new File(dir, "gamedata"));
+                extractAssetFolder(resBase + "/gamedata", new File(dir, "gamedata"));
+                // Engine fallback reads game_mode from openxray.ltx — keep it
+                // in sync with the selected mode (flags -soc/-cs/-cop win anyway).
+                // SoC keeps configs in gamedata/config, CS/CoP in gamedata/configs.
+                patchGameMode(dir, gameMode);
             } else {
                 AppLog.i("FileSystem", "No gamedata in APK assets, using external gamedata.");
             }
             File targetFsgame = new File(dir, "fsgame.ltx");
             if (!targetFsgame.exists()) {
                 try {
-                    extractAssetFolder("fsgame.ltx", targetFsgame);
+                    extractAssetFolder(resBase + "/fsgame.ltx", targetFsgame);
                 } catch (Exception ignored) {}
             }
             AppLog.i("FileSystem", "Asset check finished.");
@@ -387,6 +417,61 @@ public class OpenXRayActivity extends SDLActivity {
             }
         } catch (Exception e) {
             AppLog.e("FileSystem", "extractAssetFolder error for " + assetPath + ": " + e.getMessage(), e);
+        }
+    }
+
+    // Keeps [compatibility] game_mode in the extracted openxray.ltx matched
+    // with the launcher-selected game (soc/cs/cop).
+    private void patchGameMode(File gameDir, String gameMode) {
+        try {
+            // SoC: gamedata/config, Clear Sky / Call of Pripyat: gamedata/configs.
+            String configName = "soc".equals(gameMode) ? "config" : "configs";
+            File configDir = new File(new File(gameDir, "gamedata"), configName);
+            if (!configDir.exists()) {
+                configDir.mkdirs();
+            }
+            File cfg = new File(configDir, "openxray.ltx");
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            if (cfg.exists()) {
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(cfg))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        lines.add(line);
+                    }
+                }
+            }
+            boolean inCompat = false;
+            boolean compatFound = false;
+            boolean modeSet = false;
+            int compatHeaderIndex = -1;
+            for (int i = 0; i < lines.size(); i++) {
+                String trimmed = lines.get(i).trim();
+                if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                    inCompat = "[compatibility]".equalsIgnoreCase(trimmed);
+                    if (inCompat) {
+                        compatFound = true;
+                        compatHeaderIndex = i;
+                    }
+                } else if (inCompat && trimmed.startsWith("game_mode")) {
+                    lines.set(i, "game_mode = " + gameMode);
+                    modeSet = true;
+                }
+            }
+            if (!compatFound) {
+                lines.add("[compatibility]");
+                lines.add("game_mode = " + gameMode);
+            } else if (!modeSet && compatHeaderIndex >= 0) {
+                lines.add(compatHeaderIndex + 1, "game_mode = " + gameMode);
+            }
+            try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(cfg))) {
+                for (String l : lines) {
+                    writer.write(l);
+                    writer.newLine();
+                }
+            }
+            AppLog.i("FileSystem", "Patched openxray.ltx game_mode=" + gameMode);
+        } catch (Exception e) {
+            AppLog.e("FileSystem", "patchGameMode failed: " + e.getMessage(), e);
         }
     }
 

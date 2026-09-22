@@ -241,6 +241,22 @@
                             android:checked="true" />
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <CheckBox
+                            android:id="@+id/check_nosun"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No sun (r2_sun off)"
+                            android:textColor="@color/text_main"
+                            android:textSize="12sp"
+                            android:checked="false" />
+                    </LinearLayout>
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -281,6 +297,22 @@
                         android:textSize="11sp"
                         android:visibility="gone"
                         android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Graphics preset:"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        android:layout_marginBottom="4dp" />
+
+                    <Spinner
+                        android:id="@+id/spinner_graphics_preset"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:background="@drawable/edittext_bg"
+                        android:paddingHorizontal="8dp"
+                        android:layout_marginBottom="10dp" />
 
                     <TextView
                         android:layout_width="wrap_content"

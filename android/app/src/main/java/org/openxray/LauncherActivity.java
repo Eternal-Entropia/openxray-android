@@ -58,6 +58,10 @@ public class LauncherActivity extends AppCompatActivity {
     private CheckBox mCheckNoSound;
     private CheckBox mCheckNoShadows;
     private CheckBox mCheckDLights;
+    private CheckBox mCheckNoSun;
+    private Spinner mSpinnerGraphicsPreset;
+    private java.util.List<GraphicsPresetItem> mGraphicsPresetList = new java.util.ArrayList<>();
+    private ArrayAdapter<GraphicsPresetItem> mGraphicsPresetAdapter;
     private Spinner mSpinnerResolution;
     private java.util.List<ResolutionItem> mResolutionList = new java.util.ArrayList<>();
     private ArrayAdapter<ResolutionItem> mResolutionAdapter;
@@ -122,11 +126,18 @@ public class LauncherActivity extends AppCompatActivity {
         mRadioSoc = findViewById(R.id.radio_soc);
         mRadioCs = findViewById(R.id.radio_cs);
         mRadioCop = findViewById(R.id.radio_cop);
+        if (mRadioGroupGameMode != null) {
+            // Each game lives in its own subfolder (soc/cs/cop) — re-check files on switch.
+            mRadioGroupGameMode.setOnCheckedChangeListener((group, checkedId) -> checkGamePathStatus());
+        }
 
         mCheckNoIntro = findViewById(R.id.check_nointro);
         mCheckNoSound = findViewById(R.id.check_nosound);
         mCheckNoShadows = findViewById(R.id.check_noshadows);
         mCheckDLights = findViewById(R.id.check_dlights);
+        mCheckNoSun = findViewById(R.id.check_nosun);
+        mSpinnerGraphicsPreset = findViewById(R.id.spinner_graphics_preset);
+        setupGraphicsPresetSpinner();
         mSpinnerResolution = findViewById(R.id.spinner_resolution);
         setupResolutionSpinner();
         mSpinnerRenderBackend = findViewById(R.id.spinner_render_backend);
@@ -221,6 +232,21 @@ public class LauncherActivity extends AppCompatActivity {
         mCheckNoSound.setChecked(mPrefs.getBoolean("nosound", false));
         mCheckNoShadows.setChecked(mPrefs.getBoolean("noshadows", false));
         mCheckDLights.setChecked(mPrefs.getBoolean("dlights", true));
+        if (mCheckNoSun != null) {
+            mCheckNoSun.setChecked(mPrefs.getBoolean("nosun", false));
+        }
+
+        String savedPreset = mPrefs.getString("graphics_preset", "balanced");
+        int presetIndex = 3;
+        for (int i = 0; i < mGraphicsPresetList.size(); i++) {
+            if (mGraphicsPresetList.get(i).id.equals(savedPreset)) {
+                presetIndex = i;
+                break;
+            }
+        }
+        if (mSpinnerGraphicsPreset != null) {
+            mSpinnerGraphicsPreset.setSelection(presetIndex);
+        }
 
         if (!mPrefs.getBoolean("custom_args_v2_initialized", false)) {
             String customArgs = mPrefs.getString("custom_args", "");
@@ -300,6 +326,7 @@ public class LauncherActivity extends AppCompatActivity {
             .putBoolean("nosound", mCheckNoSound.isChecked())
             .putBoolean("noshadows", mCheckNoShadows.isChecked())
             .putBoolean("dlights", mCheckDLights.isChecked())
+            .putBoolean("nosun", mCheckNoSun != null && mCheckNoSun.isChecked())
             .putString("custom_args", mEditCustomArgs.getText().toString().trim())
             .putInt("look_sens", Math.max(5, mSeekLookSens.getProgress()))
             .putInt("touch_opacity", Math.max(20, mSeekTouchOpacity.getProgress()))
@@ -320,6 +347,19 @@ public class LauncherActivity extends AppCompatActivity {
                 .putString("render_backend", item.id)
                 .apply();
         }
+
+        if (mSpinnerGraphicsPreset != null && mSpinnerGraphicsPreset.getSelectedItem() instanceof GraphicsPresetItem) {
+            GraphicsPresetItem item = (GraphicsPresetItem) mSpinnerGraphicsPreset.getSelectedItem();
+            mPrefs.edit()
+                .putString("graphics_preset", item.id)
+                .apply();
+        }
+    }
+
+    private String selectedGameMode() {
+        if (mRadioCs != null && mRadioCs.isChecked()) return "cs";
+        if (mRadioCop != null && mRadioCop.isChecked()) return "cop";
+        return "soc";
     }
 
     private void checkGamePathStatus() {
@@ -330,18 +370,16 @@ public class LauncherActivity extends AppCompatActivity {
             return;
         }
 
-        File dir = new File(pathStr);
-        File fsgame = new File(dir, "fsgame.ltx");
+        // Each game has its own subfolder: <path>/soc, <path>/cs, <path>/cop.
+        String mode = selectedGameMode();
+        File dir = new File(pathStr, mode);
 
-        if (fsgame.exists()) {
-            mTextPathStatus.setText("✓ Game files found (fsgame.ltx detected)");
+        File[] dbFiles = dir.listFiles((d, name) -> name.startsWith("gamedata.db"));
+        if (dbFiles != null && dbFiles.length > 0) {
+            mTextPathStatus.setText("✓ Found " + dbFiles.length + " gamedata.db for " + mode + " in " + dir.getAbsolutePath());
             mTextPathStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green));
         } else {
-            if (!dir.exists()) {
-                mTextPathStatus.setText("✗ Directory does not exist (create " + pathStr + " and place fsgame.ltx)");
-            } else {
-                mTextPathStatus.setText("✗ fsgame.ltx not found in directory");
-            }
+            mTextPathStatus.setText("✗ No gamedata.db in " + dir.getAbsolutePath() + " — copy the " + mode + " archives there");
             mTextPathStatus.setTextColor(ContextCompat.getColor(this, R.color.status_red));
         }
     }
@@ -372,9 +410,20 @@ public class LauncherActivity extends AppCompatActivity {
     private void launchGame(boolean isNewGame) {
         savePreferences();
 
-        String pathStr = mEditGamePath.getText().toString().trim();
+        String basePath = mEditGamePath.getText().toString().trim();
+
+        String gameMode = "soc";
+        if (mRadioCs.isChecked()) {
+            gameMode = "cs";
+        } else if (mRadioCop.isChecked()) {
+            gameMode = "cop";
+        }
+
+        // Each game lives in its own subfolder: <base>/soc, <base>/cs, <base>/cop.
+        // Saves, configs, logs and gamedata.db of different games never mix.
+        String pathStr = basePath.isEmpty() ? basePath : new File(basePath, gameMode).getAbsolutePath();
         File dir = new File(pathStr);
-        if (!dir.exists()) {
+        if (!pathStr.isEmpty() && !dir.exists()) {
             try {
                 dir.mkdirs();
             } catch (Exception ignored) {}
@@ -383,9 +432,9 @@ public class LauncherActivity extends AppCompatActivity {
         // Build args string
         StringBuilder argsBuilder = new StringBuilder();
 
-        if (mRadioCs.isChecked()) {
+        if ("cs".equals(gameMode)) {
             argsBuilder.append("-cs ");
-        } else if (mRadioCop.isChecked()) {
+        } else if ("cop".equals(gameMode)) {
             argsBuilder.append("-cop ");
         } else {
             argsBuilder.append("-soc ");
@@ -432,7 +481,13 @@ public class LauncherActivity extends AppCompatActivity {
         int resW = (selectedRes != null) ? selectedRes.width : 0;
         int resH = (selectedRes != null) ? selectedRes.height : 0;
 
-        updateUserLtxSettings(pathStr, diff, mCheckNoShadows.isChecked(), mCheckDLights.isChecked(), resW, resH);
+        boolean noSun = mCheckNoSun != null && mCheckNoSun.isChecked();
+        String graphicsPreset = "balanced";
+        if (mSpinnerGraphicsPreset != null && mSpinnerGraphicsPreset.getSelectedItem() instanceof GraphicsPresetItem) {
+            graphicsPreset = ((GraphicsPresetItem) mSpinnerGraphicsPreset.getSelectedItem()).id;
+        }
+
+        updateUserLtxSettings(pathStr, diff, mCheckNoShadows.isChecked(), mCheckDLights.isChecked(), noSun, graphicsPreset, resW, resH);
 
         float sens = Math.max(5, mSeekLookSens.getProgress()) / 10.0f;
         float opacity = Math.max(20, mSeekTouchOpacity.getProgress()) / 100.0f;
@@ -449,6 +504,7 @@ public class LauncherActivity extends AppCompatActivity {
         Intent gameIntent = new Intent(this, OpenXRayActivity.class);
         gameIntent.putExtra("extra_args", finalArgs);
         gameIntent.putExtra("extra_game_path", pathStr);
+        gameIntent.putExtra("extra_game_mode", gameMode);
         gameIntent.putExtra("extra_res_width", resW);
         gameIntent.putExtra("extra_res_height", resH);
         gameIntent.putExtra("extra_render_backend", renderBackend);
@@ -460,9 +516,12 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void showLogsDialog() {
-        String pathStr = mEditGamePath.getText().toString().trim();
-        File logDir = (pathStr != null && !pathStr.isEmpty()) 
-            ? new File(pathStr) 
+        String basePath = mEditGamePath.getText().toString().trim();
+        String pathStr = (basePath != null && !basePath.isEmpty())
+            ? new File(basePath, selectedGameMode()).getAbsolutePath()
+            : basePath;
+        File logDir = (pathStr != null && !pathStr.isEmpty())
+            ? new File(pathStr)
             : new File(Environment.getExternalStorageDirectory(), "OpenXRay");
 
         File appLogFile = new File(logDir, "openxray_app.log");
@@ -540,7 +599,65 @@ public class LauncherActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-    private void updateUserLtxSettings(String pathStr, String diff, boolean noShadows, boolean dLights, int resW, int resH) {
+    // Engine _preset tokens (see qpreset_token in xrRender_console.cpp)
+    private static String presetTokenForId(String presetId) {
+        if ("minimum".equals(presetId)) return "Minimum";
+        if ("low".equals(presetId)) return "Low";
+        if ("high".equals(presetId)) return "High";
+        if ("extreme".equals(presetId)) return "Extreme";
+        if ("potato".equals(presetId)) return "Minimum";
+        return "Default";
+    }
+
+    // Extra cheap settings applied on top of Minimum for the Potato preset.
+    // All names verified against xrRender_console.cpp console commands.
+    private static final String[][] POTATO_EXTRA_SETTINGS = {
+        {"r2_ssao_mode", "disabled"},
+        {"r2_ssao", "off"},
+        {"r2_sun_shafts", "st_opt_off"},
+        {"r2_sun_quality", "st_opt_low"},
+        {"r2_smap_size", "1024"},
+        {"r2_dof_enable", "off"},
+        {"r3_msaa", "st_opt_off"},
+        {"r2_volumetric_lights", "off"},
+        {"r3_volumetric_smoke", "off"},
+        {"r3_dynamic_wet_surfaces", "off"},
+        {"r3_water_refl", "st_opt_off"},
+        {"r2_steep_parallax", "off"},
+        {"r2_detail_bump", "off"},
+        {"r2_soft_water", "off"},
+        {"r2_soft_particles", "off"},
+        {"r__tf_aniso", "1"},
+        {"r__detail_density", "0.3"},
+        {"r2_aa", "off"},
+    };
+
+    // Graphics keys fully managed by the launcher: old values are dropped from
+    // user.ltx and re-appended after the _preset line, so switching presets
+    // never leaves stale overrides behind.
+    private static final String[] MANAGED_GRAPHICS_KEYS = {
+        "_preset",
+        "r2_sun", "r2_sun_details", "r__actor_shadow",
+        "r2_volumetric_lights", "r2_slight_fade",
+        "r2_ssao_mode", "r2_ssao", "r2_sun_shafts", "r2_sun_quality",
+        "r2_smap_size", "r2_dof_enable", "r3_msaa",
+        "r3_volumetric_smoke", "r3_dynamic_wet_surfaces", "r3_water_refl",
+        "r2_steep_parallax", "r2_detail_bump", "r2_soft_water",
+        "r2_soft_particles", "r__tf_aniso", "r__detail_density", "r2_aa",
+    };
+
+    private static boolean isManagedGraphicsKey(String trimmedLine) {
+        for (String key : MANAGED_GRAPHICS_KEYS) {
+            if (trimmedLine.equals(key)
+                    || trimmedLine.startsWith(key + " ")
+                    || trimmedLine.startsWith(key + "\t")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void updateUserLtxSettings(String pathStr, String diff, boolean noShadows, boolean dLights, boolean noSun, String graphicsPreset, int resW, int resH) {
         if (pathStr == null || pathStr.isEmpty()) return;
         try {
             File appDataDir = new File(pathStr, "_appdata_");
@@ -563,6 +680,8 @@ public class LauncherActivity extends AppCompatActivity {
             }
 
             java.util.Map<String, String> settings = new java.util.LinkedHashMap<>();
+            // _preset must come first: it loads rspec_*.ltx, lines below override it.
+            settings.put("_preset", presetTokenForId(graphicsPreset));
             if (diff != null && !diff.isEmpty()) {
                 settings.put("g_game_difficulty", diff);
             }
@@ -577,21 +696,32 @@ public class LauncherActivity extends AppCompatActivity {
                     settings.put("vid_mode", screenW + "x" + screenH);
                 }
             }
-            if (noShadows) {
+            boolean sunOff = noSun || noShadows || !dLights;
+            if (sunOff) {
                 settings.put("r2_sun", "off");
+            } else {
+                settings.put("r2_sun", "on");
+            }
+            if (noShadows) {
                 settings.put("r2_sun_details", "off");
                 settings.put("r__actor_shadow", "off");
             } else {
-                settings.put("r2_sun", "on");
                 settings.put("r2_sun_details", "on");
                 settings.put("r__actor_shadow", "on");
             }
             if (!dLights) {
-                settings.put("r2_sun", "off");
                 settings.put("r2_volumetric_lights", "off");
                 settings.put("r2_slight_fade", "0.05");
             } else {
                 settings.put("r2_slight_fade", "0.5");
+            }
+            if ("potato".equals(graphicsPreset)) {
+                for (String[] kv : POTATO_EXTRA_SETTINGS) {
+                    // Don't stomp explicit sun/light choices made above.
+                    if (!settings.containsKey(kv[0])) {
+                        settings.put(kv[0], kv[1]);
+                    }
+                }
             }
 
             java.util.List<String> lines = new java.util.ArrayList<>();
@@ -602,6 +732,9 @@ public class LauncherActivity extends AppCompatActivity {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         String trimmed = line.trim();
+                        if (isManagedGraphicsKey(trimmed)) {
+                            continue;
+                        }
                         boolean replaced = false;
                         for (java.util.Map.Entry<String, String> entry : settings.entrySet()) {
                             if (trimmed.startsWith(entry.getKey() + " ")) {
@@ -617,7 +750,6 @@ public class LauncherActivity extends AppCompatActivity {
                     }
                 }
             } else {
-                lines.add("_preset Default");
                 lines.add("renderer renderer_rgl");
             }
 
@@ -823,6 +955,41 @@ public class LauncherActivity extends AppCompatActivity {
         );
         mResolutionAdapter.setDropDownViewResource(R.layout.item_resolution_dropdown);
         mSpinnerResolution.setAdapter(mResolutionAdapter);
+    }
+
+    public static class GraphicsPresetItem {
+        public final String title;
+        public final String id;
+
+        public GraphicsPresetItem(String title, String id) {
+            this.title = title;
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return title;
+        }
+    }
+
+    private void setupGraphicsPresetSpinner() {
+        mGraphicsPresetList.clear();
+        mGraphicsPresetList.add(new GraphicsPresetItem("Potato (max speed)", "potato"));
+        mGraphicsPresetList.add(new GraphicsPresetItem("Minimum", "minimum"));
+        mGraphicsPresetList.add(new GraphicsPresetItem("Low", "low"));
+        mGraphicsPresetList.add(new GraphicsPresetItem("Balanced (Default)", "balanced"));
+        mGraphicsPresetList.add(new GraphicsPresetItem("High", "high"));
+        mGraphicsPresetList.add(new GraphicsPresetItem("Extreme", "extreme"));
+
+        mGraphicsPresetAdapter = new ArrayAdapter<>(
+            this,
+            R.layout.item_resolution_spinner,
+            mGraphicsPresetList
+        );
+        mGraphicsPresetAdapter.setDropDownViewResource(R.layout.item_resolution_dropdown);
+        if (mSpinnerGraphicsPreset != null) {
+            mSpinnerGraphicsPreset.setAdapter(mGraphicsPresetAdapter);
+        }
     }
 
     public static class RenderBackendItem {

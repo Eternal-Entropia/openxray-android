@@ -1,0 +1,67 @@
+#include "common.h"
+float4 tbase( float2 tc ) { return tex2D( s_base, tc ); }
+float4 tbase( float4 tc ) { return tex2D( s_base, tc.xy ); }
+
+#define	USE_4_DETAIL
+
+#if defined(USE_TDETAIL) && defined(USE_4_DETAIL)
+#	define	USE_4_BUMP
+#endif
+
+#ifdef USE_4_BUMP
+#include "iostructs\p_bumped.h"
+f_deffer 	_main	( p_bumped I 	)
+#else
+#include "iostructs\p_flat.h"
+f_deffer 	_main	( p_flat I 		)
+#endif
+{
+	f_deffer	O;
+
+ 	// diffuse
+	float4 D		= tbase		(I.tcdh);			// IN:  rgb.a
+	float4 L 	= tex2D		(s_lmap, I.tcdh);
+
+	float	G	= def_gloss	;
+
+# ifdef	USE_TDETAIL
+ # ifdef USE_4_DETAIL
+	float4	mask_t= tex2D		(s_mask, I.tcdh);
+	float 	mag	= dot 		(mask_t,float4(1));
+			mask_t= mask_t/mag	;
+
+	float4	d_R	= tex2D		(s_dt_r, I.tcdbump)*mask_t.r;
+	float4	d_G	= tex2D		(s_dt_g, I.tcdbump)*mask_t.g;
+	float4	d_B	= tex2D		(s_dt_b, I.tcdbump)*mask_t.b;
+	float4	d_A	= tex2D		(s_dt_a, I.tcdbump)*mask_t.a;
+	float4	dt	= d_R+d_G+d_B+d_A;
+		D.rgb	= 2.0*D.rgb*dt.rgb	 ;
+
+  # ifdef USE_4_BUMP
+	 float3	N		= 	I.M3;
+  # else
+	float3	N 	= I.N.xyz	;
+  # endif
+
+ # else
+	D.rgb	= 2.0*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
+ # endif
+# else
+	float3	N 	= I.N.xyz	;
+# endif
+
+	// hemi, sun, material
+	float 	ms	= xmaterial	;
+# ifdef USE_R2_STATIC_SUN
+		 	ms 	= L.w		;
+# endif
+
+  // 2. Standart output
+  float4     Ne = float4	(normalize(N), 									D.w			);
+  O				= pack_gbuffer( 
+								Ne,	// hemi
+								float4 	(I.position.xyz + Ne.xyz*def_virtualh/2.0, 	ms			),	//
+								float4	(D.x,	D.y,	D.z,						G			) );	// OUT: rgb.gloss
+
+  return O;
+}
