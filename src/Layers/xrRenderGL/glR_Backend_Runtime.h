@@ -517,7 +517,11 @@ ICF void CBackend::set_FillMode(u32 _mode)
     if (fill_mode != _mode)
     {
         fill_mode = _mode;
-        glPolygonMode(GL_FRONT_AND_BACK, glStateUtils::ConvertFillMode(_mode));
+        // glPolygonMode is desktop-only; it is not available in OpenGL ES.
+        // Guard against a null function pointer (GLES wireframe fallback is
+        // not supported, so we simply keep the last supported fill mode).
+        if (glPolygonMode)
+            glPolygonMode(GL_FRONT_AND_BACK, glStateUtils::ConvertFillMode(_mode));
     }
 }
 

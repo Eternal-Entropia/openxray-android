@@ -53,7 +53,7 @@ void glState::Apply()
             {
                 CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_MIN_LOD, 0.f));
                 CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_MAX_LOD, FLT_MAX));
-#if !defined(XR_PLATFORM_ANDROID)
+#if !defined(XR_PLATFORM_ANDROID) && !defined(XRAY_USE_GLES)
                 CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, ps_r__tf_Mipbias));
 #endif
             }
@@ -237,6 +237,12 @@ void glState::UpdateSamplerState(u32 stage, u32 name, u32 value)
         break;
     case D3DSAMP_BORDERCOLOR: /* D3DCOLOR */
     {
+        // GL_TEXTURE_BORDER_COLOR / glSamplerParameterIuiv are only valid on
+        // GLES 3.2+ (desktop GL always supports them). Skip on older ES.
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+        if (!GLAD_GL_ES_VERSION_3_2)
+            break;
+#endif
         GLuint color[] = {color_get_R(value), color_get_G(value), color_get_B(value), color_get_A(value)};
         CHK_GL(glSamplerParameterIuiv(m_samplerArray[stage], GL_TEXTURE_BORDER_COLOR, color));
     }
@@ -254,7 +260,7 @@ void glState::UpdateSamplerState(u32 stage, u32 name, u32 value)
             value, currentFilter, true)));
         break;
     case D3DSAMP_MIPMAPLODBIAS: /* float Mipmap LOD bias */
-#if !defined(XR_PLATFORM_ANDROID)
+#if !defined(XR_PLATFORM_ANDROID) && !defined(XRAY_USE_GLES)
         CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, value));
 #endif
         break;

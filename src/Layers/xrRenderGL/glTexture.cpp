@@ -113,7 +113,7 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
 
     u32 mip_cnt = u32(-1); // XXX: write to it when reading with GLI!
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     static bool s_has_s3tc = false;
     static bool s_s3tc_checked = false;
     if (!s_s3tc_checked)
@@ -177,48 +177,14 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
     }
 #endif
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     gli::gl GL(gli::gl::PROFILE_ES30);
 #else
     gli::gl GL(gli::gl::PROFILE_GL33);
 #endif
 
-    // TEMP DIAG: dump decoded menu background to TGA to verify CPU decode.
-    if (strstr(fn, "ui_mainmenu"))
-    {
-        glm::tvec3<GLsizei> const dext(texture.extent(0));
-        const u8* src = (const u8*)texture.data(0, 0, 0);
-        string_path dump_path;
-        FS.update_path(dump_path, "$logs$", "texdump_ui_mainmenu.tga");
-        IWriter* wr = FS.w_open(dump_path);
-        if (wr && src && dext.x > 0 && dext.y > 0)
-        {
-            wr->w_u8(0); wr->w_u8(0); wr->w_u8(2);
-            wr->w_u16(0); wr->w_u16(0); wr->w_u8(0);
-            wr->w_u16(0); wr->w_u16(0);
-            wr->w_u16((u16)dext.x); wr->w_u16((u16)dext.y);
-            wr->w_u8(32); wr->w_u8(0x28);
-            for (int y = 0; y < dext.y; ++y)
-                for (int x = 0; x < dext.x; ++x)
-                {
-                    const u8* px = src + (size_t)(y * dext.x + x) * 4;
-                    wr->w_u8(px[2]); wr->w_u8(px[1]); wr->w_u8(px[0]); wr->w_u8(px[3]);
-                }
-            Msg(">>> [glTexture] dumped '%s' to %s", fn, dump_path);
-        }
-        if (wr) FS.w_close(wr);
-    }
-
     gli::gl::format const format = GL.translate(texture.format(), texture.swizzles());
     GLenum target = GL.translate(texture.target());
-
-    // TEMP DIAG: log detected format mapping to chase DXT artifacts.
-    {
-        glm::tvec3<GLsizei> const ext0(texture.extent(0));
-        Msg(">>> [glTexture] '%s': gli_format=%d compressed=%d levels=%u extent=%dx%d internal=0x%X",
-            fn, (int)texture.format(), (int)gli::is_compressed(texture.format()),
-            (unsigned)texture.levels(), (int)ext0.x, (int)ext0.y, (unsigned)format.Internal);
-    }
 
     glGenTextures(1, &pTexture);
     glBindTexture(target, pTexture);
@@ -231,7 +197,7 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     if (gli::gl::EXTERNAL_RED != format.External)
     {
         glTexParameteri(target, GL_TEXTURE_SWIZZLE_R, format.Swizzles[gli::SWIZZLE_RED]);

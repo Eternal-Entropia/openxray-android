@@ -39,7 +39,7 @@ public:
 
 BOOL xrRender_test_hw()
 {
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     return TRUE;
 #else
     ZoneScoped;

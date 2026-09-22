@@ -1,0 +1,13 @@
+# User-provided game data (not committed)
+fsgame.ltx
+gamedata/
+
+# Staged runtime assets (staged via tools/make_portmaster.sh)
+libs.aarch64/
+xr_3da.aarch64
+*.so
+*.so.*
+
+# Runtime state
+conf/
+log.txt

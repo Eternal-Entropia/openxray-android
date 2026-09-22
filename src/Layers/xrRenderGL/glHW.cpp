@@ -104,6 +104,47 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     Caps.fDepth = D3DFMT_D24S8;
 
     // Create the context
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+    // Some drivers (e.g. Mesa Panfrost on Mali-G31) only support OpenGL ES 3.1
+    // even though the hardware advertises 3.2. Try the highest version first
+    // and fall back to older ones.
+    m_context = nullptr;
+    constexpr int glesVersions[][2] = { {3, 2}, {3, 1}, {3, 0} };
+    for (const auto& version : glesVersions)
+    {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, version[0]);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, version[1]);
+        m_context = SDL_GL_CreateContext(m_window);
+        if (m_context != nullptr)
+        {
+            ESVersion = version[0] * 10 + version[1];
+            Msg("* OpenGL ES: created context version %d.%d", version[0], version[1]);
+            break;
+        }
+        Msg("! OpenGL: could not create OpenGL ES %d.%d context: %s", version[0], version[1], SDL_GetError());
+    }
+    if (m_context == nullptr)
+    {
+        Log("! OpenGL: could not create any OpenGL ES drawing context:", SDL_GetError());
+        return;
+    }
+
+    if (MakeContextCurrent(IRender::PrimaryContext) != 0)
+    {
+        Log("! OpenGL: could not make context current:", SDL_GetError());
+        return;
+    }
+
+    int version;
+    {
+        ZoneScopedN("gladLoadGL");
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+        version = gladLoadGLES2(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
+#else
+        version = gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
+#endif
+    }
+#else
     m_context = SDL_GL_CreateContext(m_window);
     if (m_context == nullptr)
     {
@@ -120,12 +161,9 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     int version;
     {
         ZoneScopedN("gladLoadGL");
-#if defined(XR_PLATFORM_ANDROID)
-        version = gladLoadGLES2(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
-#else
         version = gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
-#endif
     }
+#endif
     if (version == 0)
     {
         Log("! OpenGL: could not initialize GLAD.");
@@ -203,7 +241,7 @@ void CHW::SetPrimaryAttributes(u32& windowFlags)
 {
     windowFlags |= SDL_WINDOW_OPENGL;
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
@@ -265,57 +303,13 @@ void CHW::EndScene() { }
 
 void CHW::Present()
 {
-#if 0 // kept for historical reasons
-    RImplementation.Target->phase_flip();
-#else
-    static size_t presentedFrames = 0;
-    const size_t frame = ++presentedFrames;
-    if (frame == 1)
-        Msg("* Present: first frame blit, w=%d h=%d, pFB=0x%X", Device.dwWidth, Device.dwHeight, pFB);
-
     glBindFramebuffer(GL_READ_FRAMEBUFFER, pFB);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    GLenum fbs = glCheckFramebufferStatus(GL_READ_FRAMEBUFFER);
-    if (fbs != GL_FRAMEBUFFER_COMPLETE || frame <= 3)
-        Msg("! Present: READ FBO 0x%X status 0x%X (complete=%d) frame %d", pFB, fbs, fbs == GL_FRAMEBUFFER_COMPLETE, frame);
-
-    if (frame <= 3 && fbs == GL_FRAMEBUFFER_COMPLETE)
-    {
-        const int w = Device.dwWidth;
-        const int h = Device.dwHeight;
-        const auto probe = [&](int x, int y, pcstr tag)
-        {
-            unsigned char px[4] = {};
-            glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px);
-            Msg("  Present: pFB px[%s](%d,%d)=%02X%02X%02X%02X", tag, x, y, px[0], px[1], px[2], px[3]);
-        };
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        probe(-1 + w / 2, h / 2, "c");            // note: (w/2,h/2) is fine since 0-based
-        probe(0, 0, "bl");
-        probe(w - 1, 0, "br");
-        probe(0, h - 1, "tl");
-        probe(w - 1, h - 1, "tr");
-    }
 
     glBlitFramebuffer(
         0, 0, Device.dwWidth, Device.dwHeight,
         0, 0, Device.dwWidth, Device.dwHeight,
         GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    GLenum err = glGetError();
-    if (err != GL_NO_ERROR && frame <= 3)
-        Msg("! Present: GL error 0x%X after blitFramebuffer (%d)", err, frame);
-
-    if (frame <= 3)
-    {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        const int w = Device.dwWidth;
-        const int h = Device.dwHeight;
-        unsigned char px[4] = {};
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glReadPixels(w / 2, h / 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px);
-        Msg("  Present: DEFAULT FBO center(%d,%d)=%02X%02X%02X%02X (after blit)", w / 2, h / 2, px[0], px[1], px[2], px[3]);
-    }
-#endif
 
     SDL_GL_SwapWindow(m_window);
     CurrentBackBuffer = (CurrentBackBuffer + 1) % BackBufferCount;

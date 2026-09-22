@@ -142,9 +142,6 @@ void CAI_Space::SetupScriptEngine()
     ZoneScoped;
 
     GEnv.ScriptEngine->init(xray::script_export::node::export_all, true);
-    CConsole::script_register(GEnv.ScriptEngine->lua());
-    CRenderDevice::script_register(GEnv.ScriptEngine->lua());
-    key_binding_registrator::script_register(GEnv.ScriptEngine->lua());
     RegisterScriptClasses();
     object_factory().register_script();
     LoadCommonScripts();

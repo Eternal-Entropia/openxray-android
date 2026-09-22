@@ -618,7 +618,7 @@ bool Decode(int total_size) /* recover */
     textsize |= (fs._getb() << 24);
     if (textsize == 0)
         return false;
-    if (total_size != -1 && static_cast<int>(textsize) > total_size)
+    if (total_size != -1 && textsize > static_cast<unsigned>(total_size))
         return false;
 
     fs.Init_Output(textsize);

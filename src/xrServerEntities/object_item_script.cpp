@@ -21,6 +21,7 @@ ObjectFactory::ClientObjectBaseClass* CObjectItemScript::client_object() const
     {
         object = m_client_creator();
     }
+#ifndef LUABIND_NO_EXCEPTIONS
     catch (const luabind::error& e)
     {
         Msg("! Luabind error while creating client object: %s", e.what());
@@ -33,6 +34,7 @@ ObjectFactory::ClientObjectBaseClass* CObjectItemScript::client_object() const
         }
         return nullptr;
     }
+#endif
     catch (const std::exception& e)
     {
         Msg("! std::exception while creating client object: %s", e.what());

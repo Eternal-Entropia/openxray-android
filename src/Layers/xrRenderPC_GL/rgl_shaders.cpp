@@ -137,7 +137,7 @@ public:
     }
 
 private:
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     static void replaceAll(xr_string& str, const xr_string& from, const xr_string& to)
     {
         if (from.empty())
@@ -157,7 +157,7 @@ private:
         cpcstr sourceData = static_cast<cpcstr>(file->pointer());
         const size_t dataLength = file->length();
 
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
         xr_string content(sourceData, dataLength);
 
         // Reserved built-in inputs on OpenGL ES
@@ -298,8 +298,16 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         sh_name.append(option);
     };
 
-#if defined(XR_PLATFORM_ANDROID)
-    options.add("#version 320 es");
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
+    // OpenGL ES drivers may not expose the newest GLSL ES version (e.g. Mesa
+    // Panfrost on Mali-G31 only supports up to OpenGL ES 3.1 / GLSL ES 3.10).
+    // Use the version that matches the context that was actually created.
+    if (HW.ESVersion >= 32)
+        options.add("#version 320 es");
+    else if (HW.ESVersion >= 31)
+        options.add("#version 310 es");
+    else
+        options.add("#version 300 es");
     options.add("precision highp float;");
     options.add("precision highp int;");
     options.add("precision lowp sampler2D;");

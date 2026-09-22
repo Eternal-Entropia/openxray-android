@@ -61,6 +61,10 @@ public:
     pcstr OpenGLVersionString;
     pcstr ShadingVersion;
     bool ComputeShadersSupported;
+
+    // Selected OpenGL ES version major*10+minor (e.g. 32, 31, 30).
+    // Used to pick the matching GLSL ES #version for shaders.
+    int ESVersion = 32;
 };
 
 extern ECORE_API CHW HW;

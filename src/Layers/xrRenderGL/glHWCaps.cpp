@@ -33,7 +33,7 @@ void CHWCaps::Update()
     // GLAD_GL_ARB_texture_float here always yields false on Android, leaving
     // bVTF disabled and the skybox textures unbound (black sky).
     // GLES 3.0+ mandates >= 16 vertex texture units, so ES 3.0 implies VTF.
-#if defined(XR_PLATFORM_ANDROID)
+#if defined(XR_PLATFORM_ANDROID) || defined(XRAY_USE_GLES)
     geometry.bVTF = (GLAD_GL_ES_VERSION_3_0 || GLAD_GL_ES_VERSION_2_0) && !strstr(Core.Params, "-novtf");
 #else
     geometry.bVTF = (GLAD_GL_VERSION_3_0 || GLAD_GL_ARB_texture_float) && !strstr(Core.Params, "-novtf");

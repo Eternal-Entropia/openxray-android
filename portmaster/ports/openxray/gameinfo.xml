@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gameList>
+  <game>
+    <path>./OpenXRay.sh</path>
+    <name>S.T.A.L.K.E.R.: OpenXRay</name>
+    <desc>Open-source engine recreation for S.T.A.L.K.E.R. (SoC / CS / CoP). Game data is required and is not included.</desc>
+    <releasedate>20260920T000000</releasedate>
+    <developer>OpenXRay Community</developer>
+    <publisher>Open Source</publisher>
+    <genre>Action</genre>
+    <image>./openxray/screenshot.png</image>
+  </game>
+</gameList>
