@@ -230,7 +230,11 @@ public class LauncherActivity extends AppCompatActivity {
                 customArgs = (customArgs + " -xclsx").trim();
             }
             mEditCustomArgs.setText(customArgs);
-            mPrefs.edit().putBoolean("custom_args_v2_initialized", true).apply();
+            // Persist the migrated value so it does not disappear on the next launch.
+            mPrefs.edit()
+                .putBoolean("custom_args_v2_initialized", true)
+                .putString("custom_args", customArgs)
+                .apply();
         } else {
             mEditCustomArgs.setText(mPrefs.getString("custom_args", "-xclsx"));
         }
@@ -594,33 +598,8 @@ public class LauncherActivity extends AppCompatActivity {
                 settings.put("r2_slight_fade", "0.5");
             }
 
-            java.util.List<String> lines = new java.util.ArrayList<>();
-            java.util.Set<String> updatedKeys = new java.util.HashSet<>();
-
-            if (targetFile.exists()) {
-                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(targetFile))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        String trimmed = line.trim();
-                        boolean replaced = false;
-                        for (java.util.Map.Entry<String, String> entry : settings.entrySet()) {
-                            if (trimmed.startsWith(entry.getKey() + " ")) {
-                                lines.add(entry.getKey() + " " + entry.getValue());
-                                updatedKeys.add(entry.getKey());
-                                replaced = true;
-                                break;
-                            }
-                        }
-                        if (!replaced) {
-                            lines.add(line);
-                        }
-                    }
-                }
-            } else {
-                lines.add("_preset Default");
-                lines.add("renderer renderer_rgl");
-            }
-
+            // Compute the latest save BEFORE rewriting the file, so an existing
+            // load_last_save key is replaced instead of duplicated.
             File[] saveDirs = new File[] {
                 new File(appDataDir, "savedgames"),
                 new File(pathStr, "savedgames"),
@@ -643,8 +622,43 @@ public class LauncherActivity extends AppCompatActivity {
                     }
                 }
             }
-            if (latestSaveName != null && !latestSaveName.isEmpty()) {
+            // Auto-load the last save only on a normal launch. Starting a new game
+            // (diff != null) must not be contradicted by a stale load_last_save.
+            final boolean shouldAutoLoad = (diff == null || diff.isEmpty())
+                    && latestSaveName != null && !latestSaveName.isEmpty();
+            if (shouldAutoLoad) {
                 settings.put("load_last_save", latestSaveName);
+            }
+
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            java.util.Set<String> updatedKeys = new java.util.HashSet<>();
+
+            if (targetFile.exists()) {
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(targetFile))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String trimmed = line.trim();
+                        if (!shouldAutoLoad && trimmed.startsWith("load_last_save ")) {
+                            // Drop a stale auto-load directive (no save present / new game).
+                            continue;
+                        }
+                        boolean replaced = false;
+                        for (java.util.Map.Entry<String, String> entry : settings.entrySet()) {
+                            if (trimmed.startsWith(entry.getKey() + " ")) {
+                                lines.add(entry.getKey() + " " + entry.getValue());
+                                updatedKeys.add(entry.getKey());
+                                replaced = true;
+                                break;
+                            }
+                        }
+                        if (!replaced) {
+                            lines.add(line);
+                        }
+                    }
+                }
+            } else {
+                lines.add("_preset Default");
+                lines.add("renderer renderer_rgl");
             }
 
             for (java.util.Map.Entry<String, String> entry : settings.entrySet()) {

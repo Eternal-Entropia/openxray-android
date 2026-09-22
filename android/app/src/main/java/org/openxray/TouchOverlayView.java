@@ -413,9 +413,9 @@ public class TouchOverlayView extends View {
                     break;
                 }
 
-                // 2. Check Joystick area (Near joystick base)
+                // 2. Check Joystick area (Around the joystick base, which is user-relocatable)
                 float joyDist = (float) Math.hypot(x - mJoyBaseX, y - mJoyBaseY);
-                if ((joyDist <= mJoyRadius * 1.6f || (x < getWidth() * 0.35f && y > getHeight() * 0.45f)) && mJoyPointerId == -1) {
+                if (joyDist <= mJoyRadius * 1.6f && mJoyPointerId == -1) {
                     mJoyPointerId = pointerId;
                     mJoyActive = true;
                     updateJoystick(x, y);

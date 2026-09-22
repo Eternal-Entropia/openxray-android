@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 
 import org.json.JSONObject;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TouchLayoutConfig {
@@ -38,7 +38,7 @@ public class TouchLayoutConfig {
         public float joyRelX;
         public float joyRelY;
         public float joyRelRadius;
-        public final Map<String, ButtonPos> buttons = new HashMap<>();
+        public final Map<String, ButtonPos> buttons = new LinkedHashMap<>();
 
         public LayoutData copy() {
             LayoutData cp = new LayoutData();

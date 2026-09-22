@@ -29,14 +29,17 @@ public class AppLog {
 
     private static final Object sLock = new Object();
     private static BufferedWriter sAppLogWriter = null;
-    private static File sCurrentLogDir = null;
+    private static volatile File sCurrentLogDir = null;
     private static boolean sInitialized = false;
 
-    private static Process sLogcatProcess = null;
-    private static Thread sLogcatThread = null;
+    private static volatile Process sLogcatProcess = null;
+    private static volatile Thread sLogcatThread = null;
     private static volatile boolean sLogcatRunning = false;
+    private static volatile int sLogcatGeneration = 0;
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
+    private static final ThreadLocal<SimpleDateFormat> DATE_FORMAT = ThreadLocal.withInitial(
+        () -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+    );
 
     /**
      * Initializes the logging system.
@@ -134,7 +137,7 @@ public class AppLog {
 
         sb.append(sep).append("\n");
         sb.append("OpenXRay Application Diagnostics Log\n");
-        sb.append("Generated at: ").append(DATE_FORMAT.format(new Date())).append("\n");
+        sb.append("Generated at: ").append(DATE_FORMAT.get().format(new Date())).append("\n");
 
         if (context != null) {
             try {
@@ -220,26 +223,37 @@ public class AppLog {
     }
 
     private static void startLogcatCapture(File logDir) {
-        if (sLogcatRunning) {
-            return;
-        }
-
         File logcatFile = new File(logDir, LOGCAT_LOG_NAME);
-        if (logcatFile.exists() && logcatFile.length() > 0) {
-            File bkp = new File(logDir, LOGCAT_LOG_NAME + ".bkp");
-            if (bkp.exists()) {
-                bkp.delete();
+        final int generation;
+        synchronized (sLock) {
+            // Stop any previous capture (e.g. started by the launcher for a
+            // different game directory) before starting a new one.
+            sLogcatRunning = false;
+            if (sLogcatProcess != null) {
+                try {
+                    sLogcatProcess.destroy();
+                } catch (Exception ignored) {}
+                sLogcatProcess = null;
             }
-            logcatFile.renameTo(bkp);
+            generation = ++sLogcatGeneration;
+
+            if (logcatFile.exists() && logcatFile.length() > 0) {
+                File bkp = new File(logDir, LOGCAT_LOG_NAME + ".bkp");
+                if (bkp.exists()) {
+                    bkp.delete();
+                }
+                logcatFile.renameTo(bkp);
+            }
+
+            sLogcatRunning = true;
         }
 
-        sLogcatRunning = true;
         sLogcatThread = new Thread(() -> {
             BufferedWriter writer = null;
             BufferedReader reader = null;
             try {
                 writer = new BufferedWriter(new FileWriter(logcatFile, false));
-                writer.write("=== OpenXRay Real-Time Logcat Capture Started: " + DATE_FORMAT.format(new Date()) + " ===\n\n");
+                writer.write("=== OpenXRay Real-Time Logcat Capture Started: " + DATE_FORMAT.get().format(new Date()) + " ===\n\n");
                 writer.flush();
 
                 int myPid = android.os.Process.myPid();
@@ -256,7 +270,7 @@ public class AppLog {
 
                 reader = new BufferedReader(new InputStreamReader(sLogcatProcess.getInputStream()));
                 String line;
-                while (sLogcatRunning && (line = reader.readLine()) != null) {
+                while (sLogcatRunning && generation == sLogcatGeneration && (line = reader.readLine()) != null) {
                     writer.write(line);
                     writer.newLine();
                     writer.flush();
@@ -264,6 +278,9 @@ public class AppLog {
             } catch (Exception e) {
                 Log.w(TAG, "Logcat capture thread exited: " + e.getMessage());
             } finally {
+                if (generation == sLogcatGeneration) {
+                    sLogcatRunning = false;
+                }
                 if (writer != null) {
                     try {
                         writer.flush();
@@ -302,7 +319,7 @@ public class AppLog {
     }
 
     private static void writeFormatted(String level, String tag, String message, Throwable t) {
-        String timestamp = DATE_FORMAT.format(new Date());
+        String timestamp = DATE_FORMAT.get().format(new Date());
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(timestamp).append("] [").append(level).append("] [").append(tag).append("] ")
           .append(message).append("\n");
@@ -340,6 +357,7 @@ public class AppLog {
 
     public static void close() {
         sLogcatRunning = false;
+        sLogcatGeneration++; // invalidate any in-flight capture thread
         if (sLogcatProcess != null) {
             try {
                 sLogcatProcess.destroy();

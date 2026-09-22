@@ -6,8 +6,11 @@ message(STATUS "OpenXRay Android: Configuring dependencies for ABI ${ANDROID_ABI
 set(MEMORY_ALLOCATOR "standard" CACHE STRING "Use specific memory allocator" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries on Android" FORCE)
 
-# Short base directory to avoid Windows MAX_PATH (260 chars) limitation in Ninja
-set(FETCHCONTENT_BASE_DIR "C:/oxr_deps" CACHE PATH "Short directory to avoid Windows MAX_PATH" FORCE)
+# Use the default FetchContent dir in the build tree on POSIX; on Windows keep
+# a short base directory to avoid MAX_PATH (260 chars) limitations in Ninja.
+if (WIN32)
+    set(FETCHCONTENT_BASE_DIR "C:/oxr_deps" CACHE PATH "Short directory to avoid Windows MAX_PATH" FORCE)
+endif()
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET ON)

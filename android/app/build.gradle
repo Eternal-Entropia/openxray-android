@@ -65,7 +65,9 @@ android {
 
     sourceSets {
         main {
-            // assets.srcDirs = ['../../res']
+            // Bundle engine resources (fsgame.ltx + gamedata/ shader & script overlay)
+            // so the game data can be extracted to storage on first launch.
+            assets.srcDirs = ['../../res']
             jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }

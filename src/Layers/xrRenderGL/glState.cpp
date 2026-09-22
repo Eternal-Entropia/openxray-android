@@ -211,7 +211,8 @@ void glState::UpdateRenderState(u32 name, u32 value)
 
 void glState::UpdateSamplerState(u32 stage, u32 name, u32 value)
 {
-    if (stage < 0 || stage >= CTexture::mtMaxCombinedShaderTextures)
+    // stage is u32, so a negative sentinel (e.g. 0xFFFFFFFF) must not index the array.
+    if (stage >= CTexture::mtMaxCombinedShaderTextures)
         return;
 
     GLint currentFilter = (GLint)GL_NEAREST;

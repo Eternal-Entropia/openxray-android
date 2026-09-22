@@ -29,6 +29,7 @@ public class OpenXRayActivity extends SDLActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private TouchOverlayView mTouchOverlay;
+    private boolean mGameDirsCreated = false;
 
     @Override
     protected String[] getLibraries() {
@@ -248,6 +249,23 @@ public class OpenXRayActivity extends SDLActivity {
         AppLog.i("Activity", "OpenXRayActivity onResume");
         super.onResume();
         hideSystemUI();
+        retryGameDirectoriesIfPossible();
+    }
+
+    private void retryGameDirectoriesIfPossible() {
+        if (mGameDirsCreated) {
+            return;
+        }
+        // On Android 11+, grant action happens in the system settings screen; when the user
+        // comes back, onResume fires but checkAndRequestPermissions() is not re-invoked.
+        // Re-run directory setup now that the permission may have been granted.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                createGameDirectories();
+            }
+        } else {
+            createGameDirectories();
+        }
     }
 
     public void hideSystemUI() {
@@ -321,6 +339,10 @@ public class OpenXRayActivity extends SDLActivity {
     }
 
     private void createGameDirectories() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            AppLog.i("FileSystem", "MANAGE_EXTERNAL_STORAGE not granted yet, deferring directory setup.");
+            return;
+        }
         try {
             Intent intent = getIntent();
             String path = (intent != null && intent.hasExtra("extra_game_path")) 
@@ -349,6 +371,7 @@ public class OpenXRayActivity extends SDLActivity {
                 } catch (Exception ignored) {}
             }
             AppLog.i("FileSystem", "Asset check finished.");
+            mGameDirsCreated = true;
         } catch (Exception e) {
             AppLog.e("FileSystem", "Error creating game directories / extracting assets: " + e.getMessage(), e);
         }

@@ -124,7 +124,11 @@ public class ControlLayoutEditorView extends View {
                 mSelectedButtonName = null;
 
                 // 1. Check if hit buttons (reverse order so top-drawn buttons get priority)
-                for (Map.Entry<String, TouchLayoutConfig.ButtonPos> entry : mLayout.buttons.entrySet()) {
+                // LinkedHashMap keeps deterministic insertion order (= draw order).
+                java.util.List<Map.Entry<String, TouchLayoutConfig.ButtonPos>> entries =
+                    new java.util.ArrayList<>(mLayout.buttons.entrySet());
+                for (int i = entries.size() - 1; i >= 0; i--) {
+                    Map.Entry<String, TouchLayoutConfig.ButtonPos> entry = entries.get(i);
                     TouchLayoutConfig.ButtonPos bp = entry.getValue();
                     float bx = bp.relX * w;
                     float by = bp.relY * h;
