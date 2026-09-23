@@ -10,11 +10,11 @@
   OpenXRay
 </h1>
 
-This rep is alpha for openxray port on android with support soc, cs, cop
+This rep is alpha for openxray port on android with support soc and cop
 
 Install: each game lives in its own subfolder:
 - /storage/emulated/0/OpenXRay/soc <- gamedata.db of Shadow of Chernobyl
-- /storage/emulated/0/OpenXRay/cs  <- gamedata.db of Clear Sky
+- /storage/emulated/0/OpenXRay/cs  <- gamedata.db of Clear Sky (not tested)
 - /storage/emulated/0/OpenXRay/cop <- gamedata.db of Call of Pripyat
 
 Select the game mode in the launcher and press start. The res/ overlay
