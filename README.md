@@ -23,7 +23,7 @@ automatically into the mode subfolder — manual copying is not needed.
 
 res/ is split per game and packed into the APK:
 - res/soc/ <- Shadow of Chernobyl overlay (gamedata/, fsgame.ltx)
-- res/cop and cs/ <- Clear Sky / Call of Pripyat overlay (gamedata/, fsgame.ltx)
+- res/cop/ <- Call of Pripyat overlay (gamedata/, fsgame.ltx), reused by Clear Sky for now
 
 On launch the matching folder is auto-extracted into the mode subfolder.
 The launcher also syncs [compatibility] game_mode in openxray.ltx

@@ -104,6 +104,8 @@ public class TouchLayoutConfig {
         ld.buttons.put("inv", new ButtonPos("inv", 0.35f, topY, smallRadius));
         ld.buttons.put("pda", new ButtonPos("pda", 0.48f, topY, smallRadius));
         ld.buttons.put("torch", new ButtonPos("torch", 0.61f, topY, smallRadius));
+        // Детектор артефактов — видна только в CoP/CS (см. TouchOverlayView.setDetectorEnabled).
+        ld.buttons.put("detector", new ButtonPos("detector", 0.72f, topY, smallRadius));
         ld.buttons.put("qsave", new ButtonPos("qsave", 0.85f, topY, smallRadius));
         ld.buttons.put("qload", new ButtonPos("qload", 0.95f, topY, smallRadius));
 

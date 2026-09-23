@@ -17,8 +17,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class AppLog {
@@ -204,11 +206,16 @@ public class AppLog {
         File appdata = new File(logDir, "_appdata_");
         sb.append("_appdata_/ folder:      ").append(appdata.exists() ? "FOUND" : "NOT FOUND").append("\n");
 
-        File[] dbFiles = logDir.listFiles((dir1, name) -> name.toLowerCase(Locale.US).startsWith("gamedata.db"));
+        File[] dbFiles = collectDatabaseArchives(logDir);
         if (dbFiles != null && dbFiles.length > 0) {
             sb.append("Database Archives (").append(dbFiles.length).append(" found):\n");
             for (File db : dbFiles) {
-                sb.append("  - ").append(db.getName()).append(" (").append(db.length() / (1024 * 1024)).append(" MB)\n");
+                String display = db.getName();
+                File parent = db.getParentFile();
+                if (parent != null && !parent.equals(logDir)) {
+                    display = parent.getName() + "/" + display;
+                }
+                sb.append("  - ").append(display).append(" (").append(db.length() / (1024 * 1024)).append(" MB)\n");
             }
         } else {
             sb.append("Database Archives:      NONE FOUND in ").append(logDir.getAbsolutePath()).append("\n");
@@ -217,6 +224,36 @@ public class AppLog {
         sb.append(sep).append("\n\n");
 
         writeRaw(sb.toString());
+    }
+
+    /**
+     * Collects game database archives for a mode folder.
+     * SoC keeps gamedata.db* in the mode root; retail CoP/CS archives live in
+     * subfolders instead (levels/levels.db*, resources/resources.db*,
+     * localization/*.db, patches/*.db, mp/*.db), so both layouts are scanned.
+     */
+    public static File[] collectDatabaseArchives(File dir) {
+        List<File> out = new ArrayList<>();
+        if (dir == null || !dir.isDirectory()) {
+            return new File[0];
+        }
+        collectDbFiles(dir, out);
+        String[] subdirs = {"levels", "resources", "localization", "patches", "mp"};
+        for (String sub : subdirs) {
+            collectDbFiles(new File(dir, sub), out);
+        }
+        return out.toArray(new File[0]);
+    }
+
+    private static void collectDbFiles(File dir, List<File> out) {
+        if (dir == null || !dir.isDirectory()) {
+            return;
+        }
+        File[] files = dir.listFiles((d, name) ->
+                name.toLowerCase(Locale.US).matches(".*\\.db\\d*$"));
+        if (files != null) {
+            out.addAll(Arrays.asList(files));
+        }
     }
 
     private static void startLogcatCapture(File logDir) {

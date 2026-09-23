@@ -993,6 +993,10 @@ class CCC_DefControls : public CCC_UnBindAll
         { kWPN_FUNC,                { SDL_SCANCODE_V,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_INVALID } },
 
         { kTORCH,                   { SDL_SCANCODE_L,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_RIGHTSTICK } },
+        // Сенсорная кнопка детектора шлёт O. Fallback-бинд, чтобы show_detector
+        // работал из коробки, даже если в default_controls.ltx / user.ltx
+        // этого бинда нет (типично для портов).
+        { kDETECTOR,                { SDL_SCANCODE_O,       SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_INVALID } },
         { kSCORES,                  { SDL_SCANCODE_TAB,     SDL_SCANCODE_UNKNOWN,       XR_CONTROLLER_BUTTON_LEFTSTICK } },
 
         { kENTER,                   { SDL_SCANCODE_RETURN,  SDL_SCANCODE_KP_ENTER,      XR_CONTROLLER_BUTTON_START } },

@@ -347,7 +347,12 @@ ICF void CBackend::Render(D3DPRIMITIVETYPE T, u32 baseV, u32 startV, u32 countV,
     // Prefer the real glDrawElementsBaseVertex: on OpenGL ES 3.2 contexts the
     // GLAD loader provides it, while ES 3.0/3.1 fallback contexts leave the
     // pointer null (emulated path). No need to force emulation on ARM.
-    const bool use_emulated_basev = (glDrawElementsBaseVertex == nullptr);
+    // ANDROID-WA: Adreno (A6xx/A7xx) segfaults inside the driver on
+    // glDrawElementsBaseVertex draws issued from FTreeVisual_ST::Render
+    // (flora, shared VB with baseV != 0). Force the emulated path
+    // (rebind VBO at byte offset + plain glDrawElements) which is proven
+    // to work on tile-based mobile GPUs.
+    const bool use_emulated_basev = true; // (glDrawElementsBaseVertex == nullptr);
 
     if (baseV == 0)
     {

@@ -228,7 +228,7 @@ public class LauncherActivity extends AppCompatActivity {
         else if ("cop".equals(mode)) mRadioCop.setChecked(true);
         else mRadioSoc.setChecked(true);
 
-        mCheckNoIntro.setChecked(mPrefs.getBoolean("nointro", true));
+        mCheckNoIntro.setChecked(mPrefs.getBoolean("nointro", false));
         mCheckNoSound.setChecked(mPrefs.getBoolean("nosound", false));
         mCheckNoShadows.setChecked(mPrefs.getBoolean("noshadows", false));
         mCheckDLights.setChecked(mPrefs.getBoolean("dlights", true));
@@ -371,15 +371,17 @@ public class LauncherActivity extends AppCompatActivity {
         }
 
         // Each game has its own subfolder: <path>/soc, <path>/cs, <path>/cop.
+        // SoC archives are gamedata.db* in the mode root; retail CoP/CS
+        // archives live in subfolders (levels/, resources/, ...).
         String mode = selectedGameMode();
         File dir = new File(pathStr, mode);
 
-        File[] dbFiles = dir.listFiles((d, name) -> name.startsWith("gamedata.db"));
+        File[] dbFiles = AppLog.collectDatabaseArchives(dir);
         if (dbFiles != null && dbFiles.length > 0) {
-            mTextPathStatus.setText("✓ Found " + dbFiles.length + " gamedata.db for " + mode + " in " + dir.getAbsolutePath());
+            mTextPathStatus.setText("✓ Found " + dbFiles.length + " game archives for " + mode + " in " + dir.getAbsolutePath());
             mTextPathStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green));
         } else {
-            mTextPathStatus.setText("✗ No gamedata.db in " + dir.getAbsolutePath() + " — copy the " + mode + " archives there");
+            mTextPathStatus.setText("✗ No game archives in " + dir.getAbsolutePath() + " — copy the " + mode + " archives there");
             mTextPathStatus.setTextColor(ContextCompat.getColor(this, R.color.status_red));
         }
     }

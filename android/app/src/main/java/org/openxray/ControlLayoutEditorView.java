@@ -232,6 +232,7 @@ public class ControlLayoutEditorView extends View {
         if ("inv".equals(id)) return "INV";
         if ("pda".equals(id)) return "PDA";
         if ("torch".equals(id)) return "TORCH";
+        if ("detector".equals(id)) return "Detector (CoP/CS)";
         if ("qsave".equals(id)) return "QSAVE";
         if ("qload".equals(id)) return "QLOAD";
         return id.toUpperCase(Locale.US);
@@ -262,6 +263,7 @@ public class ControlLayoutEditorView extends View {
         if ("inv".equals(id)) return "INV";
         if ("pda".equals(id)) return "PDA";
         if ("torch".equals(id)) return "TORCH";
+        if ("detector".equals(id)) return "DETECT";
         if ("qsave".equals(id)) return "QSAVE";
         if ("qload".equals(id)) return "QLOAD";
         return id.toUpperCase(Locale.US);
@@ -323,6 +325,9 @@ public class ControlLayoutEditorView extends View {
             } else if (id.startsWith("wpn_") || "ammo".equals(id) || "gl".equals(id)) {
                 mButtonPaint.setColor(Color.argb(190, 24, 24, 28));
                 mButtonStrokePaint.setColor(Color.argb(220, 240, 170, 40));
+            } else if ("detector".equals(id)) {
+                mButtonPaint.setColor(Color.argb(190, 30, 55, 20));
+                mButtonStrokePaint.setColor(Color.argb(240, 150, 230, 60));
             } else {
                 mButtonPaint.setColor(Color.argb(170, 30, 30, 30));
                 mButtonStrokePaint.setColor(Color.argb(200, 200, 200, 200));

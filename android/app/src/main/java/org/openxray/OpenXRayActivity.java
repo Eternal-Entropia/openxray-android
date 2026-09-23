@@ -349,8 +349,9 @@ public class OpenXRayActivity extends SDLActivity {
             AppLog.i("FileSystem", "Game mode for res overlay: " + gameMode);
 
             // res/ is split per game: res/soc/* for Shadow of Chernobyl,
-            // res/"cop and cs"/* for Clear Sky and Call of Pripyat.
-            String resBase = "cop and cs";
+            // res/cop/* for Call of Pripyat (Clear Sky reuses it until it
+            // gets its own overlay).
+            String resBase = "cop";
             if ("soc".equals(gameMode)) {
                 resBase = "soc";
             }
@@ -490,6 +491,11 @@ public class OpenXRayActivity extends SDLActivity {
             float sens = intent.getFloatExtra("extra_look_sensitivity", 1.0f);
 
             AppLog.i("TouchControls", "Touch controls params: opacity=" + opacity + ", scale=" + scale + ", sens=" + sens);
+            // Кнопка детектора артефактов — только CoP и Clear Sky.
+            String mode = intent.getStringExtra("extra_game_mode");
+            boolean detector = "cop".equals(mode) || "cs".equals(mode);
+            AppLog.i("TouchControls", "Detector button enabled: " + detector + " (mode=" + mode + ")");
+            mTouchOverlay.setDetectorEnabled(detector);
             mTouchOverlay.setOverlayAlpha(opacity);
             mTouchOverlay.setControlsScale(scale);
             mTouchOverlay.setLookSensitivity(sens);

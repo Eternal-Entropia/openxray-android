@@ -25,6 +25,7 @@ public class TouchOverlayView extends View {
     public static final int TYPE_BANDAGE = 4;
     public static final int TYPE_QE = 5;
     public static final int TYPE_WEAPON = 6;
+    public static final int TYPE_DETECTOR = 7;
 
     public static class TouchButton {
         public String id;
@@ -115,6 +116,10 @@ public class TouchOverlayView extends View {
     private final Paint mWeaponStrokePaint;
     private final Paint mWeaponPressedPaint;
 
+    private final Paint mDetectorPaint;
+    private final Paint mDetectorStrokePaint;
+    private final Paint mDetectorPressedPaint;
+
     private final Paint mTextPaint;
 
     // Joystick state
@@ -146,6 +151,14 @@ public class TouchOverlayView extends View {
 
     private float mButtonScale = 1.0f;
     private float mOverlayAlpha = 0.6f;
+
+    // Artifact detector button (CoP/Clear Sky only — SoC has no detector slot).
+    private boolean mDetectorEnabled = false;
+
+    public void setDetectorEnabled(boolean enabled) {
+        this.mDetectorEnabled = enabled;
+        reloadLayout();
+    }
 
     public TouchOverlayView(Context context) {
         super(context);
@@ -223,6 +236,15 @@ public class TouchOverlayView extends View {
         mWeaponPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mWeaponPressedPaint.setStyle(Paint.Style.FILL);
 
+        // Detector (Lime Green / Dark Olive)
+        mDetectorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mDetectorPaint.setStyle(Paint.Style.FILL);
+        mDetectorStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mDetectorStrokePaint.setStyle(Paint.Style.STROKE);
+        mDetectorStrokePaint.setStrokeWidth(3);
+        mDetectorPressedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mDetectorPressedPaint.setStyle(Paint.Style.FILL);
+
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
@@ -271,6 +293,11 @@ public class TouchOverlayView extends View {
         mWeaponPaint.setColor(Color.argb((int) (a * 0.55f), 24, 24, 28));
         mWeaponStrokePaint.setColor(Color.argb((int) (a * 0.85f), 240, 170, 40));
         mWeaponPressedPaint.setColor(Color.argb((int) (a * 0.90f), 220, 140, 20));
+
+        // Detector (Dark Olive / Lime Border)
+        mDetectorPaint.setColor(Color.argb((int) (a * 0.55f), 30, 55, 20));
+        mDetectorStrokePaint.setColor(Color.argb((int) (a * 0.90f), 150, 230, 60));
+        mDetectorPressedPaint.setColor(Color.argb((int) (a * 0.90f), 120, 200, 40));
 
         mTextPaint.setColor(Color.argb((int) (a * 0.95f), 255, 255, 255));
     }
@@ -358,6 +385,10 @@ public class TouchOverlayView extends View {
         addButtonFromConfig(layout, "inv", "INV", KeyEvent.KEYCODE_I, TYPE_DEFAULT);
         addButtonFromConfig(layout, "pda", "PDA", KeyEvent.KEYCODE_P, TYPE_DEFAULT);
         addButtonFromConfig(layout, "torch", "TORCH", KeyEvent.KEYCODE_L, TYPE_DEFAULT);
+        // Детектор артефактов (show_detector, клавиша O) — только CoP/CS.
+        if (mDetectorEnabled) {
+            addButtonFromConfig(layout, "detector", "DETECT", KeyEvent.KEYCODE_O, TYPE_DETECTOR);
+        }
         addButtonFromConfig(layout, "qsave", "QSAVE", KeyEvent.KEYCODE_F6, TYPE_DEFAULT);
         addButtonFromConfig(layout, "qload", "QLOAD", KeyEvent.KEYCODE_F7, TYPE_DEFAULT);
 
@@ -659,6 +690,10 @@ public class TouchOverlayView extends View {
                 case TYPE_WEAPON:
                     fillPaint = btn.isPressed ? mWeaponPressedPaint : mWeaponPaint;
                     strokePaint = mWeaponStrokePaint;
+                    break;
+                case TYPE_DETECTOR:
+                    fillPaint = btn.isPressed ? mDetectorPressedPaint : mDetectorPaint;
+                    strokePaint = mDetectorStrokePaint;
                     break;
                 default:
                     fillPaint = btn.isPressed ? mButtonPressedPaint : mButtonPaint;

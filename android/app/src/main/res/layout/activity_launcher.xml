@@ -34,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Port by Eternal Entropia. Alpha v2"
+                android:text="Port by Eternal Entropia and lesad710. Alpha v3"
                 android:textColor="@color/text_muted"
                 android:textSize="14sp" />
         </LinearLayout>
@@ -203,7 +203,7 @@
                             android:text="Skip intro (-nointro)"
                             android:textColor="@color/text_main"
                             android:textSize="12sp"
-                            android:checked="true"
+                            android:checked="false"
                             android:layout_marginEnd="16dp" />
 
                         <CheckBox
