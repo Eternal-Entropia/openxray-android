@@ -677,6 +677,15 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         return super.dispatchKeyEvent(event);
     }
 
+    /**
+     * Subclasses may defer the start of the native app thread until their own
+     * background preparation has finished (e.g. extracting game assets on the
+     * first run). The default implementation is always ready.
+     */
+    protected boolean isNativeStartReady() {
+        return true;
+    }
+
     /* Transition to next state */
     public static void handleNativeState() {
 
@@ -711,6 +720,15 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
                     // This is the entry point to the C app.
                     // Start up the C app thread and enable sensor input for the first time
                     // FIXME: Why aren't we enabling sensor input at start?
+
+                    // Subclasses (game ports) may still be preparing game data on a
+                    // background thread. Keep the main thread responsive and re-check
+                    // shortly instead of blocking — long synchronous prep would trip
+                    // watchdog / ANR detectors on some OEM builds (e.g. MIUI).
+                    if (mSingleton != null && !mSingleton.isNativeStartReady()) {
+                        mSingleton.commandHandler.postDelayed(SDLActivity::handleNativeState, 50L);
+                        return;
+                    }
 
                     mSDLThread = new Thread(new SDLMain(), "SDLThread");
                     mSurface.enableSensor(Sensor.TYPE_ACCELEROMETER, true);
