@@ -6,14 +6,128 @@
 
 #include <gli/gli.hpp>
 
+#define BCDEC_IMPLEMENTATION
+#include "bcdec.h"
+
 namespace xray::render::RENDER_NAMESPACE
 {
+namespace
+{
+// Fast DXT1/3/5 -> RGBA8 decode via bcdec (an order of magnitude faster than
+// gli's per-texel convert). Returns an empty texture when the format/target
+// combination is not handled; the caller then falls back to gli::convert.
+enum class FastDxtKind
+{
+    None,
+    BC1,
+    BC2,
+    BC3
+};
+
+FastDxtKind fast_dxt_kind(gli::format f)
+{
+    switch (f)
+    {
+    case gli::FORMAT_RGB_DXT1_UNORM_BLOCK8:
+    case gli::FORMAT_RGB_DXT1_SRGB_BLOCK8:
+    case gli::FORMAT_RGBA_DXT1_UNORM_BLOCK8:
+    case gli::FORMAT_RGBA_DXT1_SRGB_BLOCK8:
+        return FastDxtKind::BC1;
+    case gli::FORMAT_RGBA_DXT3_UNORM_BLOCK16:
+    case gli::FORMAT_RGBA_DXT3_SRGB_BLOCK16:
+        return FastDxtKind::BC2;
+    case gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16:
+    case gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16:
+        return FastDxtKind::BC3;
+    default:
+        return FastDxtKind::None;
+    }
+}
+
+void fast_dxt_block(FastDxtKind kind, const u8* src, u8* dst, int dstPitch)
+{
+    switch (kind)
+    {
+    case FastDxtKind::BC1:
+        bcdec_bc1(src, dst, dstPitch);
+        break;
+    case FastDxtKind::BC2:
+        bcdec_bc2(src, dst, dstPitch);
+        break;
+    case FastDxtKind::BC3:
+        bcdec_bc3(src, dst, dstPitch);
+        break;
+    default:
+        break;
+    }
+}
+
+// Decodes one mip level; handles partial (sub-4x4) tail mips via temp block.
+void fast_dxt_level(FastDxtKind kind, const u8* src, u8* dst, u32 w, u32 h, size_t srcRowBlocks, size_t blockBytes, size_t dstPitch)
+{
+    const u32 bw = (w + 3) / 4;
+    const u32 bh = (h + 3) / 4;
+    u8 tmp[4 * 4 * 4];
+    for (u32 by = 0; by < bh; ++by)
+    {
+        for (u32 bx = 0; bx < bw; ++bx)
+        {
+            const u8* s = src + (size_t(by) * srcRowBlocks + bx) * blockBytes;
+            const u32 cw = (bx + 1) * 4 <= w ? 4 : w - bx * 4;
+            const u32 ch = (by + 1) * 4 <= h ? 4 : h - by * 4;
+            u8* d = dst + size_t(by) * 4 * dstPitch + size_t(bx) * 4 * 4;
+            if (cw == 4 && ch == 4)
+            {
+                fast_dxt_block(kind, s, d, (int)dstPitch);
+            }
+            else
+            {
+                fast_dxt_block(kind, s, tmp, 16);
+                for (u32 row = 0; row < ch; ++row)
+                    CopyMemory(d + size_t(row) * dstPitch, tmp + size_t(row) * 16, size_t(cw) * 4);
+            }
+        }
+    }
+}
+
+gli::texture fast_dxt_decode(const gli::texture& src)
+{
+    const FastDxtKind kind = fast_dxt_kind(src.format());
+    if (kind == FastDxtKind::None)
+        return gli::texture();
+    if (src.target() != gli::TARGET_2D && src.target() != gli::TARGET_CUBE)
+        return gli::texture();
+
+    const size_t blockBytes = (kind == FastDxtKind::BC1) ? 8 : 16;
+    const gli::texture2d::extent_type baseExtent((gli::texture::size_type)src.extent().x, (gli::texture::size_type)src.extent().y);
+    gli::texture dst;
+    if (src.target() == gli::TARGET_2D)
+        dst = gli::texture2d(gli::FORMAT_RGBA8_UNORM_PACK8, baseExtent, src.levels(), src.swizzles());
+    else
+        dst = gli::texture_cube(gli::FORMAT_RGBA8_UNORM_PACK8, baseExtent, src.levels(), src.swizzles());
+
+    for (gli::texture::size_type face = 0; face < dst.faces(); ++face)
+    {
+        for (gli::texture::size_type level = 0; level < dst.levels(); ++level)
+        {
+            const u32 w = (u32)dst.extent(level).x;
+            const u32 h = (u32)dst.extent(level).y;
+            const size_t dstPitch = size_t(w) * 4;
+            const size_t srcRowBlocks = (size_t(w) + 3) / 4;
+            fast_dxt_level(kind, (const u8*)src.data(0, face, level), (u8*)dst.data(0, face, level),
+                w, h, srcRowBlocks, blockBytes, dstPitch);
+        }
+    }
+    return dst;
+}
+} // namespace
 void fix_texture_name(pstr fn)
 {
     pstr _ext = strext(fn);
     if (_ext &&
         (0 == xr_stricmp(_ext, ".tga") ||
             0 == xr_stricmp(_ext, ".dds") ||
+            0 == xr_stricmp(_ext, ".ktx") ||
             0 == xr_stricmp(_ext, ".bmp") ||
             0 == xr_stricmp(_ext, ".ogm")))
         *_ext = 0;
@@ -87,6 +201,11 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
 
             for (cpcstr folder : { "$level$", "$game_saves$", "$game_textures$" })
             {
+                // Prefer ETC2-compressed .ktx override when present (direct GPU
+                // upload, no CPU decode); fall back to the original .dds.
+                exist = FS.exist(fn, folder, fname, ".ktx");
+                if (exist)
+                    break;
                 exist = FS.exist(fn, folder, fname, ".dds");
                 if (exist)
                     break;
@@ -153,26 +272,38 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc)
 #ifdef DEBUG
         Msg("* OpenGL: Decompressing texture '%s' on CPU -> RGBA8", fn);
 #endif
-        gli::format target_format = gli::FORMAT_RGBA8_UNORM_PACK8;
-        switch (texture.target())
+        // Fast path: bcdec decodes DXT1/3/5 blocks an order of magnitude
+        // faster than gli's per-texel convert. Toggle via r__fast_dxt.
+        gli::texture fast;
+        if (ps_r__fast_dxt)
+            fast = fast_dxt_decode(texture);
+        if (!fast.empty())
         {
-        case gli::TARGET_2D:
-            texture = gli::convert(gli::texture2d(texture), target_format);
-            break;
-        case gli::TARGET_CUBE:
-            texture = gli::convert(gli::texture_cube(texture), target_format);
-            break;
-        case gli::TARGET_2D_ARRAY:
-            texture = gli::convert(gli::texture2d_array(texture), target_format);
-            break;
-        case gli::TARGET_3D:
-            texture = gli::convert(gli::texture3d(texture), target_format);
-            break;
-        case gli::TARGET_CUBE_ARRAY:
-            texture = gli::convert(gli::texture_cube_array(texture), target_format);
-            break;
-        default:
-            break;
+            texture = fast;
+        }
+        else
+        {
+            gli::format target_format = gli::FORMAT_RGBA8_UNORM_PACK8;
+            switch (texture.target())
+            {
+            case gli::TARGET_2D:
+                texture = gli::convert(gli::texture2d(texture), target_format);
+                break;
+            case gli::TARGET_CUBE:
+                texture = gli::convert(gli::texture_cube(texture), target_format);
+                break;
+            case gli::TARGET_2D_ARRAY:
+                texture = gli::convert(gli::texture2d_array(texture), target_format);
+                break;
+            case gli::TARGET_3D:
+                texture = gli::convert(gli::texture3d(texture), target_format);
+                break;
+            case gli::TARGET_CUBE_ARRAY:
+                texture = gli::convert(gli::texture_cube_array(texture), target_format);
+                break;
+            default:
+                break;
+            }
         }
     }
 #endif

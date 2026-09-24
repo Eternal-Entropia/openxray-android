@@ -1,0 +1,263 @@
+Log directory: /storage/emulated/0/OpenXRay/soc
+
+=== [openxray_app.log (Current Session)] ===
+================================================================================
+OpenXRay Application Diagnostics Log
+Generated at: 2026-09-24 16:21:41.235
+Application: org.openxray (v1.6.02, code: 1)
+--------------------------------------------------------------------------------
+[DEVICE HARDWARE & OS]
+Manufacturer:   Xiaomi
+Brand:          POCO
+Model:          22101320G
+Device:         redwood
+Product:        redwood_id
+Hardware:       qcom
+Board:          redwood
+Android OS:     14 (API 34)
+Supported ABIs: [arm64-v8a, armeabi-v7a, armeabi]
+CPU Cores:      8
+Total RAM:      7190 MB
+Available RAM:  1641 MB
+Low Memory:     false
+OpenGL ES Ver:  3.2
+--------------------------------------------------------------------------------
+[STORAGE & PERMISSIONS]
+Storage Access Mode:    All Files Access (Android 11+)
+Storage Permission:     GRANTED (Full Access)
+Log Directory:          /storage/emulated/0/OpenXRay/soc
+Log Directory Writable: true
+Free Storage Space:     7177 MB
+--------------------------------------------------------------------------------
+[GAME DIRECTORY AUDIT]
+fsgame.ltx:             FOUND (968 bytes)
+gamedata/ folder:       FOUND
+_appdata_/ folder:      FOUND
+Database Archives (11 found):
+  - gamedata.db0 (647 MB)
+  - gamedata.db1 (675 MB)
+  - gamedata.db2 (640 MB)
+  - gamedata.db3 (653 MB)
+  - gamedata.db4 (640 MB)
+  - gamedata.db5 (664 MB)
+  - gamedata.db6 (636 MB)
+  - gamedata.db7 (641 MB)
+  - gamedata.db8 (282 MB)
+  - gamedata.db9 (75 MB)
+  - gamedata.db (52 MB)
+================================================================================
+
+[2026-09-24 16:21:41.239] [INFO] [Activity] OpenXRayActivity onCreate started
+[2026-09-24 16:21:41.240] [INFO] [Activity] Launch arguments: [-soc, -rgl, -xclsx, -game_path, /storage/emulated/0/OpenXRay/soc]
+[2026-09-24 16:21:41.240] [INFO] [Activity] Selected render backend: native
+[2026-09-24 16:21:41.240] [INFO] [RenderBackend] >>> Using Native OpenGLES backend (system driver) <<<
+[2026-09-24 16:21:41.241] [INFO] [Libraries] Starting native library loading (9 libraries)...
+[2026-09-24 16:21:41.241] [INFO] [Libraries] [1/9] Loading library: c++_shared
+[2026-09-24 16:21:41.245] [INFO] [Libraries]   -> SUCCESS: c++_shared
+[2026-09-24 16:21:41.245] [INFO] [Libraries] [2/9] Loading library: SDL2
+[2026-09-24 16:21:41.247] [INFO] [Libraries]   -> SUCCESS: SDL2
+[2026-09-24 16:21:41.247] [INFO] [Libraries] [3/9] Loading library: openal
+[2026-09-24 16:21:41.251] [INFO] [Libraries]   -> SUCCESS: openal
+[2026-09-24 16:21:41.251] [INFO] [Libraries] [4/9] Loading library: xrCore
+[2026-09-24 16:21:41.252] [INFO] [Libraries]   -> SUCCESS: xrCore
+[2026-09-24 16:21:41.252] [INFO] [Libraries] [5/9] Loading library: xrAPI
+[2026-09-24 16:21:41.253] [INFO] [Libraries]   -> SUCCESS: xrAPI
+[2026-09-24 16:21:41.253] [INFO] [Libraries] [6/9] Loading library: xrEngine
+[2026-09-24 16:21:41.260] [INFO] [Libraries]   -> SUCCESS: xrEngine
+[2026-09-24 16:21:41.260] [INFO] [Libraries] [7/9] Loading library: xrRender_GL
+[2026-09-24 16:21:41.266] [INFO] [Libraries]   -> SUCCESS: xrRender_GL
+[2026-09-24 16:21:41.266] [INFO] [Libraries] [8/9] Loading library: xrGame
+[2026-09-24 16:21:41.326] [INFO] [Libraries]   -> SUCCESS: xrGame
+[2026-09-24 16:21:41.326] [INFO] [Libraries] [9/9] Loading library: main
+[2026-09-24 16:21:41.328] [INFO] [Libraries]   -> SUCCESS: main
+[2026-09-24 16:21:41.328] [INFO] [Libraries] All native libraries loaded successfully.
+[2026-09-24 16:21:42.353] [INFO] [Permissions] MANAGE_EXTERNAL_STORAGE is granted.
+[2026-09-24 16:21:42.354] [INFO] [FileSystem] Target game directory: /storage/emulated/0/OpenXRay/soc
+[2026-09-24 16:21:42.354] [INFO] [FileSystem] Game mode for res overlay: soc
+[2026-09-24 16:21:42.354] [INFO] [FileSystem] Res source folder: soc
+[2026-09-24 16:21:42.357] [INFO] [FileSystem] Extracting assets to: /storage/emulated/0/OpenXRay/soc/gamedata
+[2026-09-24 16:21:43.134] [INFO] [FileSystem] Patched openxray.ltx game_mode=soc
+[2026-09-24 16:21:43.134] [INFO] [FileSystem] Asset check finished.
+[2026-09-24 16:21:43.136] [INFO] [TouchControls] Touch controls params: opacity=0.6, scale=1.0, sens=1.0
+[2026-09-24 16:21:43.136] [INFO] [TouchControls] Detector button enabled: false (mode=soc)
+[2026-09-24 16:21:43.136] [INFO] [TouchControls] Touch overlay added to layout.
+[2026-09-24 16:21:43.136] [INFO] [Activity] OpenXRayActivity onCreate finished successfully
+[2026-09-24 16:21:43.138] [INFO] [Activity] OpenXRayActivity onResume
+
+
+=== [openxray_app.log.bkp (Previous Session / Crash)] ===
+================================================================================
+OpenXRay Application Diagnostics Log
+Generated at: 2026-09-24 16:21:31.472
+Application: org.openxray (v1.6.02, code: 1)
+--------------------------------------------------------------------------------
+[DEVICE HARDWARE & OS]
+Manufacturer:   Xiaomi
+Brand:          POCO
+Model:          22101320G
+Device:         redwood
+Product:        redwood_id
+Hardware:       qcom
+Board:          redwood
+Android OS:     14 (API 34)
+Supported ABIs: [arm64-v8a, armeabi-v7a, armeabi]
+CPU Cores:      8
+Total RAM:      7190 MB
+Available RAM:  1634 MB
+Low Memory:     false
+OpenGL ES Ver:  3.2
+--------------------------------------------------------------------------------
+[STORAGE & PERMISSIONS]
+Storage Access Mode:    All Files Access (Android 11+)
+Storage Permission:     GRANTED (Full Access)
+Log Directory:          /storage/emulated/0/OpenXRay/soc
+Log Directory Writable: true
+Free Storage Space:     7177 MB
+--------------------------------------------------------------------------------
+[GAME DIRECTORY AUDIT]
+fsgame.ltx:             FOUND (968 bytes)
+gamedata/ folder:       FOUND
+_appdata_/ folder:      FOUND
+Database Archives (11 found):
+  - gamedata.db0 (647 MB)
+  - gamedata.db1 (675 MB)
+  - gamedata.db2 (640 MB)
+  - gamedata.db3 (653 MB)
+  - gamedata.db4 (640 MB)
+  - gamedata.db5 (664 MB)
+  - gamedata.db6 (636 MB)
+  - gamedata.db7 (641 MB)
+  - gamedata.db8 (282 MB)
+  - gamedata.db9 (75 MB)
+  - gamedata.db (52 MB)
+================================================================================
+
+[2026-09-24 16:21:31.476] [INFO] [Activity] OpenXRayActivity onCreate started
+[2026-09-24 16:21:31.477] [INFO] [Activity] Launch arguments: [-soc, -rgl, -xclsx, -game_path, /storage/emulated/0/OpenXRay/soc]
+[2026-09-24 16:21:31.477] [INFO] [Activity] Selected render backend: native
+[2026-09-24 16:21:31.477] [INFO] [RenderBackend] >>> Using Native OpenGLES backend (system driver) <<<
+[2026-09-24 16:21:31.478] [INFO] [Libraries] Starting native library loading (9 libraries)...
+[2026-09-24 16:21:31.478] [INFO] [Libraries] [1/9] Loading library: c++_shared
+[2026-09-24 16:21:31.480] [INFO] [Libraries]   -> SUCCESS: c++_shared
+[2026-09-24 16:21:31.480] [INFO] [Libraries] [2/9] Loading library: SDL2
+[2026-09-24 16:21:31.481] [INFO] [Libraries]   -> SUCCESS: SDL2
+[2026-09-24 16:21:31.481] [INFO] [Libraries] [3/9] Loading library: openal
+[2026-09-24 16:21:31.485] [INFO] [Libraries]   -> SUCCESS: openal
+[2026-09-24 16:21:31.485] [INFO] [Libraries] [4/9] Loading library: xrCore
+[2026-09-24 16:21:31.487] [INFO] [Libraries]   -> SUCCESS: xrCore
+[2026-09-24 16:21:31.487] [INFO] [Libraries] [5/9] Loading library: xrAPI
+[2026-09-24 16:21:31.488] [INFO] [Libraries]   -> SUCCESS: xrAPI
+[2026-09-24 16:21:31.488] [INFO] [Libraries] [6/9] Loading library: xrEngine
+[2026-09-24 16:21:31.492] [INFO] [Libraries]   -> SUCCESS: xrEngine
+[2026-09-24 16:21:31.492] [INFO] [Libraries] [7/9] Loading library: xrRender_GL
+[2026-09-24 16:21:31.496] [INFO] [Libraries]   -> SUCCESS: xrRender_GL
+[2026-09-24 16:21:31.496] [INFO] [Libraries] [8/9] Loading library: xrGame
+[2026-09-24 16:21:31.546] [INFO] [Libraries]   -> SUCCESS: xrGame
+[2026-09-24 16:21:31.547] [INFO] [Libraries] [9/9] Loading library: main
+[2026-09-24 16:21:31.548] [INFO] [Libraries]   -> SUCCESS: main
+[2026-09-24 16:21:31.548] [INFO] [Libraries] All native libraries loaded successfully.
+[2026-09-24 16:21:32.575] [INFO] [Permissions] MANAGE_EXTERNAL_STORAGE is granted.
+[2026-09-24 16:21:32.576] [INFO] [FileSystem] Target game directory: /storage/emulated/0/OpenXRay/soc
+[2026-09-24 16:21:32.576] [INFO] [FileSystem] Game mode for res overlay: soc
+[2026-09-24 16:21:32.576] [INFO] [FileSystem] Res source folder: soc
+[2026-09-24 16:21:32.581] [INFO] [FileSystem] Extracting assets to: /storage/emulated/0/OpenXRay/soc/gamedata
+[2026-09-24 16:21:33.366] [INFO] [FileSystem] Patched openxray.ltx game_mode=soc
+[2026-09-24 16:21:33.366] [INFO] [FileSystem] Asset check finished.
+[2026-09-24 16:21:33.367] [INFO] [TouchControls] Touch controls params: opacity=0.6, scale=1.0, sens=1.0
+[2026-09-24 16:21:33.368] [INFO] [TouchControls] Detector button enabled: false (mode=soc)
+[2026-09-24 16:21:33.368] [INFO] [TouchControls] Touch overlay added to layout.
+[2026-09-24 16:21:33.368] [INFO] [Activity] OpenXRayActivity onCreate finished successfully
+[2026-09-24 16:21:33.370] [INFO] [Activity] OpenXRayActivity onResume
+
+
+=== [openxray_logcat.log] (last 100 lines) ===
+09-24 12:40:43.186  6206  6206 I Libraries: All native libraries loaded successfully.
+09-24 12:40:43.186  6206  6206 V SDL     : nativeSetupJNI()
+09-24 12:40:43.187  6206  6206 V SDL     : AUDIO nativeSetupJNI()
+09-24 12:40:43.187  6206  6206 V SDL     : CONTROLLER nativeSetupJNI()
+09-24 12:40:43.190  6206  6807 W AidlConversionCppNdk: aidl2legacy_AudioChannelLayout_audio_channel_mask_t: no legacy output audio_channel_mask_t found for AudioChannelLayout{layoutMask: 16}
+09-24 12:40:43.197  6206  6206 V hidapi  : HIDDeviceRegisterCallback()
+09-24 12:40:43.207  6206  6206 I Video   : Setting fixed surface resolution from launcher: 640x480
+09-24 12:40:43.210  6206  6206 D DecorView[]: getWindowModeFromSystem  windowmode is 1
+09-24 12:40:44.212  6206  6206 I Permissions: MANAGE_EXTERNAL_STORAGE is granted.
+09-24 12:40:44.213  6206  6206 I FileSystem: Target game directory: /storage/emulated/0/Download/stalker/soc
+09-24 12:40:44.213  6206  6206 I FileSystem: Game mode for res overlay: soc
+09-24 12:40:44.213  6206  6206 I FileSystem: Res source folder: soc
+09-24 12:40:44.216  6206  6206 I FileSystem: Extracting assets to: /storage/emulated/0/Download/stalker/soc/gamedata
+09-24 12:40:45.989  6206  6774 W MIUIScout App: Enter APP_SCOUT_WARNING State
+09-24 12:40:45.990  6206  6774 W MIUIScout App:  (Current message: duration=2931ms seq=8858 late=3ms h=android.app.ActivityThread$H w=159)
+09-24 12:40:45.991  6206  6774 D AppScoutStateMachine: dump trace dirName = 2026-09-24-12-40-45-6206-APP_SCOUT_WARNING-org.openxray
+09-24 12:40:45.993  6206  6812 W MIUIScout App: Event:APP_SCOUT_WARNING Thread:SDLActivity backtrace:
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at libcore.io.Linux.open(Native Method)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at libcore.io.ForwardingOs.open(ForwardingOs.java:410)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at libcore.io.ForwardingOs.open(ForwardingOs.java:410)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8646)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at libcore.io.IoBridge.open(IoBridge.java:555)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at java.io.FileOutputStream.<init>(FileOutputStream.java:259)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at java.io.FileOutputStream.<init>(FileOutputStream.java:208)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:403)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.createGameDirectories(OpenXRayActivity.java:368)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at org.openxray.OpenXRayActivity.onCreate(OpenXRayActivity.java:167)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.Activity.performCreate(Activity.java:8891)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.Activity.performCreate(Activity.java:8856)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1471)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3973)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4144)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:103)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:99)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2589)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.os.Handler.dispatchMessage(Handler.java:106)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.os.Looper.loopOnce(Looper.java:224)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.os.Looper.loop(Looper.java:318)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at android.app.ActivityThread.main(ActivityThread.java:8770)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at java.lang.reflect.Method.invoke(Native Method)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:561)
+09-24 12:40:45.993  6206  6812 W MIUIScout App:     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1013)
+09-24 12:40:46.040  6206  6211 I org.openxray: Thread[2,tid=6211,WaitingInMainSignalCatcherLoop,Thread*=0x72fc800000,peer=0x27818d0,"Signal Catcher"]: reacting to signal 3
+09-24 12:40:46.040  6206  6211 I org.openxray: 
+09-24 12:40:46.144  6206  6211 I org.openxray: Wrote stack traces to tombstoned
+09-24 12:40:48.089  6206  6211 I org.openxray: Thread[2,tid=6211,WaitingInMainSignalCatcherLoop,Thread*=0x72fc800000,peer=0x27818d0,"Signal Catcher"]: reacting to signal 3
+09-24 12:40:48.089  6206  6211 I org.openxray: 
+09-24 12:40:48.170  6206  6236 D MIUIScout ANR: get period history msg: (Current message: duration=5110ms seq=8858 late=3ms h=android.app.ActivityThread$H w=159)
+09-24 12:40:48.170  6206  6236 D MIUIScout ANR: get period history msg:messages for the same target android.view.Choreographer$FrameHandler execute time>50ms (count=71 totalwalltime=201ms totalrunningtime=159ms totalrunnabletime=5ms h=android.view.Choreographer$FrameHandler whatORcallback=android.view.Choreographer$FrameDisplayEventReceiver)
+09-24 12:40:48.170  6206  6236 D MIUIScout ANR: get period history msg:In recent 20s, total historyMsgCount=512
+09-24 12:40:48.171  6206  6236 W MIUIScout ANR: Print Message Id: 0 MessageInfo: { when=-5s115ms what=159 obj=android.app.servertransaction.ClientTransaction@558920d target=android.app.ActivityThread$H }
+09-24 12:40:48.171  6206  6236 W MIUIScout ANR: Print Message Id: 1 MessageInfo: { when=-5s114ms callback=android.view.View$UnsetPressedState target=android.view.ViewRootImpl$ViewRootHandler }
+09-24 12:40:48.171  6206  6236 W MIUIScout ANR: Print Message Id: 2 MessageInfo: { when=-5s114ms callback=android.view.Choreographer$FrameDisplayEventReceiver target=android.view.Choreographer$FrameHandler }
+09-24 12:40:48.171  6206  6236 W MIUIScout ANR: Print Message Id: 3 MessageInfo: { when=-5s47ms callback=android.widget.Editor$Blink target=android.view.ViewRootImpl$ViewRootHandler }
+09-24 12:40:48.172  6206  6236 W MIUIScout ANR: Print Message Id: 4 MessageInfo: { when=-4s978ms what=0 obj=[Landroid.media.AudioDeviceInfo;@49c1b3 target=android.media.AudioManager$NativeEventHandlerDelegate$1 }
+09-24 12:40:48.172  6206  6236 W MIUIScout ANR: (Print messages: 5, polling=false, quitting=false)
+09-24 12:40:48.202  6206  6211 I org.openxray: Wrote stack traces to tombstoned
+09-24 12:40:48.490  6206  6774 W MIUIScout App: Enter APP_SCOUT_HANG state
+09-24 12:40:48.490  6206  6774 W MIUIScout App:  (Current message: duration=5431ms seq=8858 late=3ms h=android.app.ActivityThread$H w=159)
+09-24 12:40:48.491  6206  6774 D AppScoutStateMachine: dump trace dirName = 2026-09-24-12-40-48-6206-APP_SCOUT_HANG-org.openxray
+09-24 12:40:48.492  6206  6822 W MIUIScout App: Event:APP_SCOUT_HANG Thread:SDLActivity backtrace:
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at libcore.io.Linux.open(Native Method)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at libcore.io.ForwardingOs.open(ForwardingOs.java:410)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at libcore.io.ForwardingOs.open(ForwardingOs.java:410)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8646)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at libcore.io.IoBridge.open(IoBridge.java:555)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at java.io.FileOutputStream.<init>(FileOutputStream.java:259)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at java.io.FileOutputStream.<init>(FileOutputStream.java:208)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:403)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at org.openxray.OpenXRayActivity.extractAssetFolder(OpenXRayActivity.java:416)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at org.openxray.OpenXRayActivity.createGameDirectories(OpenXRayActivity.java:368)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at org.openxray.OpenXRayActivity.onCreate(OpenXRayActivity.java:167)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.Activity.performCreate(Activity.java:8891)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.Activity.performCreate(Activity.java:8856)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1471)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3973)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4144)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:103)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:99)
+09-24 12:40:48.492  6206  6822 W MIUIScout App:     at android.app.ActivityThread$H.ha

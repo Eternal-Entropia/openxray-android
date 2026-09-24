@@ -152,6 +152,9 @@ ICF void CBackend::set_Format(SDeclaration* _decl)
         vb_stride = 0;
         ib = 0;
         cached_baseV = 0;
+        cached_bind_vb = 0;
+        cached_bind_stride = 0;
+        cached_bind_offset = size_t(-1);
         return;
     }
 
@@ -169,6 +172,9 @@ ICF void CBackend::set_Format(SDeclaration* _decl)
         vb_stride = 0;
         ib = 0;
         cached_baseV = 0;
+        cached_bind_vb = 0;
+        cached_bind_stride = 0;
+        cached_bind_offset = size_t(-1);
     }
 }
 
@@ -250,6 +256,29 @@ ICF void CBackend::set_PP(GLuint _pp, pcstr _n)
     }
 }
 
+ICF void CBackend::bindVertexBase(u32 baseV)
+{
+    u32 stride = vb_stride;
+    if (!stride && decl)
+        stride = GetDeclVertexSize(decl->dcl_code.data(), 0);
+    const size_t byteOffset = size_t(baseV) * size_t(stride);
+    if (cached_bind_vb == vb && cached_bind_stride == stride && cached_bind_offset == byteOffset)
+        return;
+    if (GLAD_GL_ARB_vertex_attrib_binding)
+    {
+        CHK_GL(glBindVertexBuffer(0, vb, byteOffset, stride));
+    }
+    else
+    {
+        CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
+        SetGLVertexPointer(decl, byteOffset);
+    }
+    cached_bind_vb = vb;
+    cached_bind_stride = stride;
+    cached_bind_offset = byteOffset;
+    cached_baseV = baseV;
+}
+
 ICF void CBackend::set_Vertices(GLuint _vb, u32 _vb_stride)
 {
     if (vb != _vb || vb_stride != _vb_stride)
@@ -261,16 +290,7 @@ ICF void CBackend::set_Vertices(GLuint _vb, u32 _vb_stride)
         vb = _vb;
         vb_stride = _vb_stride;
 
-        if (GLAD_GL_ARB_vertex_attrib_binding)
-        {
-            CHK_GL(glBindVertexBuffer(0, vb, 0, vb_stride));
-        }
-        else
-        {
-            CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
-            SetGLVertexPointer(decl, 0);
-            cached_baseV = 0;
-        }
+        bindVertexBase(0);
     }
 }
 
@@ -344,44 +364,12 @@ ICF void CBackend::Render(D3DPRIMITIVETYPE T, u32 baseV, u32 startV, u32 countV,
     stat.render.polys += PC;
     constants.flush();
 
-    // Prefer the real glDrawElementsBaseVertex: on OpenGL ES 3.2 contexts the
-    // GLAD loader provides it, while ES 3.0/3.1 fallback contexts leave the
-    // pointer null (emulated path). No need to force emulation on ARM.
-    // ANDROID-WA: Adreno (A6xx/A7xx) segfaults inside the driver on
-    // glDrawElementsBaseVertex draws issued from FTreeVisual_ST::Render
-    // (flora, shared VB with baseV != 0). Force the emulated path
-    // (rebind VBO at byte offset + plain glDrawElements) which is proven
-    // to work on tile-based mobile GPUs.
-    const bool use_emulated_basev = true; // (glDrawElementsBaseVertex == nullptr);
-
-    if (baseV == 0)
-    {
-        if (cached_baseV != 0)
-        {
-            CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
-            SetGLVertexPointer(decl, 0);
-            cached_baseV = 0;
-        }
-        CHK_GL(glDrawElements(Topology, iIndexCount, GL_UNSIGNED_SHORT, (void*)(startI * sizeof(GLushort))));
-    }
-    else
-    {
-        if (use_emulated_basev)
-        {
-            if (cached_baseV != baseV)
-            {
-                u32 stride = vb_stride ? vb_stride : GetDeclVertexSize(decl->dcl_code.data(), 0);
-                CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
-                SetGLVertexPointer(decl, static_cast<size_t>(baseV) * static_cast<size_t>(stride));
-                cached_baseV = baseV;
-            }
-            CHK_GL(glDrawElements(Topology, iIndexCount, GL_UNSIGNED_SHORT, (void*)(startI * sizeof(GLushort))));
-        }
-        else
-        {
-            CHK_GL(glDrawElementsBaseVertex(Topology, iIndexCount, GL_UNSIGNED_SHORT, (void*)(startI * sizeof(GLushort)), baseV));
-        }
-    }
+    // Base vertex is applied as a vertex-buffer binding offset (see
+    // bindVertexBase), so plain glDrawElements is used on every path.
+    // glDrawElementsBaseVertex is deliberately avoided: it segfaults Adreno
+    // drivers on flora draws (shared VB, baseV != 0).
+    bindVertexBase(baseV);
+    CHK_GL(glDrawElements(Topology, iIndexCount, GL_UNSIGNED_SHORT, (void*)(startI * sizeof(GLushort))));
     PGO(Msg("PGO:DIP:%dv/%df", countV, PC));
 }
 
@@ -397,12 +385,7 @@ ICF void CBackend::Render(D3DPRIMITIVETYPE T, u32 startV, u32 PC)
     stat.render.verts += iIndexCount;
     stat.render.polys += PC;
     constants.flush();
-    if (cached_baseV != 0)
-    {
-        CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
-        SetGLVertexPointer(decl, 0);
-        cached_baseV = 0;
-    }
+    bindVertexBase(0);
     CHK_GL(glDrawArrays(Topology, startV, iIndexCount));
     PGO(Msg("PGO:DIP:%dv/%df", iIndexCount, PC));
 }

@@ -5,7 +5,7 @@ namespace xray::render::RENDER_NAMESPACE
 class R_sync_point
 {
     void* q_sync_point[CHWCaps::MAX_GPUS]{};
-    u32 q_sync_count;
+    u32 q_sync_count{ 0 };
 
 public:
     R_sync_point() = default;

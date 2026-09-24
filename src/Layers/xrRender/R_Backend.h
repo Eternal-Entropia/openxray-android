@@ -111,6 +111,11 @@ private:
     u32 vb_stride;
 #if defined(USE_OGL)
     u32 cached_baseV{ 0 };
+    // Cache of the currently bound vertex buffer state (classic attrib path):
+    // skips redundant glBindBuffer + SetGLVertexPointer calls.
+    VertexBufferHandle cached_bind_vb{ 0 };
+    u32 cached_bind_stride{ 0 };
+    size_t cached_bind_offset{ size_t(-1) };
 #endif
 
     // Pixel/Vertex constants
@@ -415,6 +420,12 @@ public:
 
     ICF void set_Vertices(VertexBufferHandle _vb, u32 _vb_stride);
     ICF void set_Indices(IndexBufferHandle _ib);
+#if defined(USE_OGL)
+    // Binds (vb, baseV * stride) on vertex buffer binding 0, skipping the
+    // GL calls when the state already matches. Applies the base vertex as a
+    // binding offset so plain glDrawElements can be used everywhere.
+    ICF void bindVertexBase(u32 baseV);
+#endif
     ICF void set_Geometry(SGeometry* _geom);
     ICF void set_Geometry(ref_geom& _geom) { set_Geometry(_geom._get()); }
     IC void set_Stencil(u32 _enable, u32 _func = D3DCMP_ALWAYS, u32 _ref = 0x00, u32 _mask = 0x00,

@@ -63,6 +63,7 @@ extern ECORE_API int ps_r__tf_Anisotropic;
 extern ECORE_API float ps_r__tf_Mipbias;
 
 extern ECORE_API int ps_r__clear_models_on_unload;
+extern ECORE_API int ps_r__fast_dxt;
 
 enum
 {

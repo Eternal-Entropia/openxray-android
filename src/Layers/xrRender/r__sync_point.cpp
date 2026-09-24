@@ -43,8 +43,13 @@ bool R_sync_point::Wait(u32 /*wait_sleep*/, u64 timeout)
 
 void R_sync_point::End()
 {
+    // Delete the fence we have just waited on, then advance. (The old code
+    // advanced first and deleted the *next* slot: uninitialized/zero handles
+    // on early frames and fence leaks afterwards.)
+    if (q_sync_point[q_sync_count])
+        CHK_GL(glDeleteSync((GLsync)q_sync_point[q_sync_count]));
+    q_sync_point[q_sync_count] = nullptr;
     q_sync_count = (q_sync_count + 1) % HW.Caps.iGPUNum;
-    CHK_GL(glDeleteSync((GLsync)q_sync_point[q_sync_count]));
 }
 #elif defined(USE_DX11)
 void R_sync_point::Create()

@@ -59,6 +59,7 @@ public class LauncherActivity extends AppCompatActivity {
     private CheckBox mCheckNoShadows;
     private CheckBox mCheckDLights;
     private CheckBox mCheckNoSun;
+    private CheckBox mCheckFastDxt;
     private Spinner mSpinnerGraphicsPreset;
     private java.util.List<GraphicsPresetItem> mGraphicsPresetList = new java.util.ArrayList<>();
     private ArrayAdapter<GraphicsPresetItem> mGraphicsPresetAdapter;
@@ -136,6 +137,7 @@ public class LauncherActivity extends AppCompatActivity {
         mCheckNoShadows = findViewById(R.id.check_noshadows);
         mCheckDLights = findViewById(R.id.check_dlights);
         mCheckNoSun = findViewById(R.id.check_nosun);
+        mCheckFastDxt = findViewById(R.id.check_fastdxt);
         mSpinnerGraphicsPreset = findViewById(R.id.spinner_graphics_preset);
         setupGraphicsPresetSpinner();
         mSpinnerResolution = findViewById(R.id.spinner_resolution);
@@ -235,9 +237,12 @@ public class LauncherActivity extends AppCompatActivity {
         if (mCheckNoSun != null) {
             mCheckNoSun.setChecked(mPrefs.getBoolean("nosun", false));
         }
+        if (mCheckFastDxt != null) {
+            mCheckFastDxt.setChecked(mPrefs.getBoolean("fastdxt", true));
+        }
 
-        String savedPreset = mPrefs.getString("graphics_preset", "balanced");
-        int presetIndex = 3;
+        String savedPreset = mPrefs.getString("graphics_preset", "none");
+        int presetIndex = 0;
         for (int i = 0; i < mGraphicsPresetList.size(); i++) {
             if (mGraphicsPresetList.get(i).id.equals(savedPreset)) {
                 presetIndex = i;
@@ -327,6 +332,7 @@ public class LauncherActivity extends AppCompatActivity {
             .putBoolean("noshadows", mCheckNoShadows.isChecked())
             .putBoolean("dlights", mCheckDLights.isChecked())
             .putBoolean("nosun", mCheckNoSun != null && mCheckNoSun.isChecked())
+            .putBoolean("fastdxt", mCheckFastDxt != null && mCheckFastDxt.isChecked())
             .putString("custom_args", mEditCustomArgs.getText().toString().trim())
             .putInt("look_sens", Math.max(5, mSeekLookSens.getProgress()))
             .putInt("touch_opacity", Math.max(20, mSeekTouchOpacity.getProgress()))
@@ -489,7 +495,7 @@ public class LauncherActivity extends AppCompatActivity {
             graphicsPreset = ((GraphicsPresetItem) mSpinnerGraphicsPreset.getSelectedItem()).id;
         }
 
-        updateUserLtxSettings(pathStr, diff, mCheckNoShadows.isChecked(), mCheckDLights.isChecked(), noSun, graphicsPreset, resW, resH);
+        updateUserLtxSettingsIfChanged(pathStr, gameMode, diff, mCheckNoShadows.isChecked(), mCheckDLights.isChecked(), noSun, mCheckFastDxt != null && mCheckFastDxt.isChecked(), graphicsPreset, resW, resH);
 
         float sens = Math.max(5, mSeekLookSens.getProgress()) / 10.0f;
         float opacity = Math.max(20, mSeekTouchOpacity.getProgress()) / 100.0f;
@@ -601,8 +607,10 @@ public class LauncherActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-    // Engine _preset tokens (see qpreset_token in xrRender_console.cpp)
+    // Engine _preset tokens (see qpreset_token in xrRender_console.cpp).
+    // "none" means the launcher does not manage graphics at all (set in game).
     private static String presetTokenForId(String presetId) {
+        if ("none".equals(presetId)) return null;
         if ("minimum".equals(presetId)) return "Minimum";
         if ("low".equals(presetId)) return "Low";
         if ("high".equals(presetId)) return "High";
@@ -646,7 +654,68 @@ public class LauncherActivity extends AppCompatActivity {
         "r3_volumetric_smoke", "r3_dynamic_wet_surfaces", "r3_water_refl",
         "r2_steep_parallax", "r2_detail_bump", "r2_soft_water",
         "r2_soft_particles", "r__tf_aniso", "r__detail_density", "r2_aa",
+        // Extra aspects covered per preset below.
+        "r2_tf_mipbias", "r__geometry_lod", "r2_ssa_lod_a", "r2_ssa_lod_b",
+        "r2_sun_far", "rs_skeleton_update", "r__fast_dxt",
     };
+
+    // Full-aspect values per graphics preset. Key names verified against
+    // xrRender_console.cpp console commands and their min/max ranges.
+    // Texture quality: r__tf_aniso (filtering) + r2_tf_mipbias (detail).
+    // Draw distance: r2_ssa_lod_a/b (object cull) + r2_sun_far.
+    // Model quality: r__geometry_lod + rs_skeleton_update (lower = smoother).
+    private static java.util.Map<String, String[][]> presetAspectSettings() {
+        java.util.Map<String, String[][]> m = new java.util.LinkedHashMap<>();
+        String[][] potato = {
+            {"r__tf_aniso", "1"}, {"r2_tf_mipbias", "1.0"},
+            {"r__geometry_lod", "0.5"}, {"rs_skeleton_update", "32"},
+            {"r2_ssa_lod_a", "32"}, {"r2_ssa_lod_b", "32"},
+            {"r__detail_density", "0.3"},
+            {"r2_smap_size", "1024"}, {"r2_sun_far", "60"},
+        };
+        String[][] minimum = {
+            {"r__tf_aniso", "2"}, {"r2_tf_mipbias", "0.5"},
+            {"r__geometry_lod", "0.6"}, {"rs_skeleton_update", "24"},
+            {"r2_ssa_lod_a", "32"}, {"r2_ssa_lod_b", "32"},
+            {"r__detail_density", "0.3"},
+            {"r2_smap_size", "1024"}, {"r2_sun_far", "70"},
+        };
+        String[][] low = {
+            {"r__tf_aniso", "4"}, {"r2_tf_mipbias", "0"},
+            {"r__geometry_lod", "0.75"}, {"rs_skeleton_update", "16"},
+            {"r2_ssa_lod_a", "48"}, {"r2_ssa_lod_b", "40"},
+            {"r__detail_density", "0.45"},
+            {"r2_smap_size", "1536"}, {"r2_sun_far", "80"},
+        };
+        String[][] balanced = {
+            {"r__tf_aniso", "4"}, {"r2_tf_mipbias", "0"},
+            {"r__geometry_lod", "0.9"}, {"rs_skeleton_update", "10"},
+            {"r2_ssa_lod_a", "64"}, {"r2_ssa_lod_b", "48"},
+            {"r__detail_density", "0.6"},
+            {"r2_smap_size", "2048"}, {"r2_sun_far", "100"},
+        };
+        String[][] high = {
+            {"r__tf_aniso", "8"}, {"r2_tf_mipbias", "0"},
+            {"r__geometry_lod", "1.0"}, {"rs_skeleton_update", "8"},
+            {"r2_ssa_lod_a", "64"}, {"r2_ssa_lod_b", "56"},
+            {"r__detail_density", "0.75"},
+            {"r2_smap_size", "2048"}, {"r2_sun_far", "120"},
+        };
+        String[][] extreme = {
+            {"r__tf_aniso", "16"}, {"r2_tf_mipbias", "0"},
+            {"r__geometry_lod", "1.25"}, {"rs_skeleton_update", "4"},
+            {"r2_ssa_lod_a", "96"}, {"r2_ssa_lod_b", "64"},
+            {"r__detail_density", "0.9"},
+            {"r2_smap_size", "3072"}, {"r2_sun_far", "150"},
+        };
+        m.put("potato", potato);
+        m.put("minimum", minimum);
+        m.put("low", low);
+        m.put("balanced", balanced);
+        m.put("high", high);
+        m.put("extreme", extreme);
+        return m;
+    }
 
     private static boolean isManagedGraphicsKey(String trimmedLine) {
         for (String key : MANAGED_GRAPHICS_KEYS) {
@@ -659,7 +728,31 @@ public class LauncherActivity extends AppCompatActivity {
         return false;
     }
 
-    private void updateUserLtxSettings(String pathStr, String diff, boolean noShadows, boolean dLights, boolean noSun, String graphicsPreset, int resW, int resH) {
+    // The launcher rewrites graphics keys in user.ltx ONLY when the
+    // launcher-side selection changed since the last launch (or on first
+    // run). Otherwise settings tweaked inside the game are left alone —
+    // previously every launch wiped them back to the spinner values.
+    private void updateUserLtxSettingsIfChanged(String modePathStr, String gameMode, String diff,
+            boolean noShadows, boolean dLights, boolean noSun, boolean fastDxt,
+            String graphicsPreset, int resW, int resH) {
+        if ("none".equals(graphicsPreset)) {
+            AppLog.i("Launcher", "Graphics preset is 'none', leaving user.ltx alone (set in game)");
+            return;
+        }
+        String sig = graphicsPreset + "|" + resW + "x" + resH + "|"
+                + noShadows + "|" + dLights + "|" + noSun + "|" + fastDxt + "|" + diff;
+        String key = "applied_gfx_signature_" + gameMode;
+        String prev = mPrefs.getString(key, null);
+        File probe = new File(new File(modePathStr, "_appdata_"), "user.ltx");
+        if (sig.equals(prev) && probe.exists()) {
+            AppLog.i("Launcher", "Graphics selection unchanged, keeping in-game user.ltx");
+            return;
+        }
+        updateUserLtxSettings(modePathStr, diff, noShadows, dLights, noSun, fastDxt, graphicsPreset, resW, resH);
+        mPrefs.edit().putString(key, sig).apply();
+    }
+
+    private void updateUserLtxSettings(String pathStr, String diff, boolean noShadows, boolean dLights, boolean noSun, boolean fastDxt, String graphicsPreset, int resW, int resH) {
         if (pathStr == null || pathStr.isEmpty()) return;
         try {
             File appDataDir = new File(pathStr, "_appdata_");
@@ -684,9 +777,21 @@ public class LauncherActivity extends AppCompatActivity {
             java.util.Map<String, String> settings = new java.util.LinkedHashMap<>();
             // _preset must come first: it loads rspec_*.ltx, lines below override it.
             settings.put("_preset", presetTokenForId(graphicsPreset));
+            // Full-aspect values for this preset (texture quality, draw
+            // distance, model quality...). Explicit sun/light checkbox
+            // choices below still win over these.
+            String[][] aspects = presetAspectSettings().get(graphicsPreset);
+            if (aspects != null) {
+                for (String[] kv : aspects) {
+                    settings.put(kv[0], kv[1]);
+                }
+            }
             if (diff != null && !diff.isEmpty()) {
                 settings.put("g_game_difficulty", diff);
             }
+            // Fast CPU DXT decode (bcdec); managed so the checkbox state
+            // always matches the engine, like the other graphics keys.
+            settings.put("r__fast_dxt", fastDxt ? "1" : "0");
             if (resW > 0 && resH > 0) {
                 settings.put("vid_mode", resW + "x" + resH);
             } else {
@@ -976,10 +1081,11 @@ public class LauncherActivity extends AppCompatActivity {
 
     private void setupGraphicsPresetSpinner() {
         mGraphicsPresetList.clear();
+        mGraphicsPresetList.add(new GraphicsPresetItem("None (set in game)", "none"));
         mGraphicsPresetList.add(new GraphicsPresetItem("Potato (max speed)", "potato"));
         mGraphicsPresetList.add(new GraphicsPresetItem("Minimum", "minimum"));
         mGraphicsPresetList.add(new GraphicsPresetItem("Low", "low"));
-        mGraphicsPresetList.add(new GraphicsPresetItem("Balanced (Default)", "balanced"));
+        mGraphicsPresetList.add(new GraphicsPresetItem("Balanced", "balanced"));
         mGraphicsPresetList.add(new GraphicsPresetItem("High", "high"));
         mGraphicsPresetList.add(new GraphicsPresetItem("Extreme", "extreme"));
 

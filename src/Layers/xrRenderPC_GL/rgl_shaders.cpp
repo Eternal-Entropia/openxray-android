@@ -450,6 +450,9 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
     }
     else
     {
+        // Must stay defined: shaders use "#if SSR_QUALITY > 0" which strict
+        // drivers reject for undefined identifiers.
+        options.add("SSR_QUALITY", "0");
         sh_name.append(static_cast<u32>(0));
     }
 
@@ -473,7 +476,11 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         sh_name.append(ps_r_sun_shafts);
     }
     else
+    {
+        // Must stay defined: shaders use "#if SUN_SHAFTS_QUALITY==1".
+        options.add("SUN_SHAFTS_QUALITY", "0");
         sh_name.append(static_cast<u32>(0));
+    }
 
     if (RImplementation.o.advancedpp && ps_r_ssao)
     {
@@ -482,7 +489,11 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         sh_name.append(ps_r_ssao);
     }
     else
+    {
+        // Must stay defined: shaders use "#if SSAO_QUALITY ...".
+        options.add("SSAO_QUALITY", "0");
         sh_name.append(static_cast<u32>(0));
+    }
 
     // Sun quality
     if (RImplementation.o.advancedpp && ps_r_sun_quality)
@@ -492,7 +503,11 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         sh_name.append(ps_r_sun_quality);
     }
     else
+    {
+        // Must stay defined: shaders use "#if SUN_QUALITY ...".
+        options.add("SUN_QUALITY", "0");
         sh_name.append(static_cast<u32>(0));
+    }
 
     // Steep parallax
     {
@@ -599,7 +614,12 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
     }
 
     GLuint program = 0;
-    if (GLAD_GL_ARB_get_program_binary && GLAD_GL_ARB_separate_shader_objects && FS.exist(full_path))
+    // NOTE: the desktop GLAD_GL_ARB_get_program_binary flag is not set by the
+    // Android GLES loader; program binaries are core since OpenGL ES 3.0, so
+    // gate the cache on the ES version as well.
+    const bool binaryCacheEnabled =
+        (GLAD_GL_ARB_get_program_binary || GLAD_GL_ES_VERSION_3_0) && GLAD_GL_ARB_separate_shader_objects;
+    if (binaryCacheEnabled && FS.exist(full_path))
     {
         IReader* file = FS.r_open(full_path);
         if (file->length() > 8)
@@ -646,7 +666,7 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         // Compile the shader from sources
         program = create_shader(pTarget, sources.get(), sources.length(), filename, result, nullptr);
 
-        if (GLAD_GL_ARB_get_program_binary && GLAD_GL_ARB_separate_shader_objects && program)
+        if (binaryCacheEnabled && program)
         {
             GLint binaryLength{};
             GLenum binaryFormat{};

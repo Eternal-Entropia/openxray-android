@@ -143,11 +143,10 @@ public:
                     }
                     return TResult(luabind::call_function<TResult>(m_functor, std::forward<Args>(args)...));
                 }
-                else
-                {
-                    Msg("! [CScriptCallbackEx] functor is NOT valid in operator()!");
-                    FlushLog();
-                }
+                // NOTE: unset functor is a normal "no handler" state, NOT an error.
+                // Do not log/flush here: this fires constantly from UI code and
+                // synchronous FlushLog() on every call stalls the main thread
+                // (visible hitches on mobile storage).
             }
             process_error catch (const std::exception& e)
             {

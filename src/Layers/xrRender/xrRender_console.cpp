@@ -148,6 +148,7 @@ float ps_r__ssaHZBvsTEX = 96.f; // RO
 
 int ps_r__tf_Anisotropic = 8;
 float ps_r__tf_Mipbias = 0.0f;
+int ps_r__fast_dxt = 1; // fast CPU DXT decode via bcdec (0 = legacy gli path)
 
 int ps_r__clear_models_on_unload = 0; // Alundaio
 
@@ -771,6 +772,7 @@ void xrRender_initconsole()
     CMD2(CCC_tf_MipBias, "r2_tf_mipbias", &ps_r__tf_Mipbias); // {-3 +3}
 
     CMD4(CCC_Integer, "r__clear_models_on_unload", &ps_r__clear_models_on_unload, 0, 1); // Alundaio
+    CMD4(CCC_Integer, "r__fast_dxt", &ps_r__fast_dxt, 0, 1); // Android: bcdec fast path
 
     // R1
     CMD4(CCC_Float, "r1_ssa_lod_a", &ps_r1_ssaLOD_A, 16, 96);
