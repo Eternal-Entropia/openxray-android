@@ -13,6 +13,9 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -29,6 +32,11 @@ public class OpenXRayActivity extends SDLActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private TouchOverlayView mTouchOverlay;
+
+    private final Object mInitLock = new Object();
+    private boolean mGameDataReady = false;
+    private boolean mInitStarted = false;
+    private View mLoadingOverlay;
 
     @Override
     protected String[] getLibraries() {
@@ -164,7 +172,7 @@ public class OpenXRayActivity extends SDLActivity {
 
         hideSystemUI();
         checkAndRequestPermissions();
-        createGameDirectories();
+        startGameDirectoriesAsync();
         setupTouchControls();
 
         AppLog.i("Activity", "OpenXRayActivity onCreate finished successfully");
@@ -317,6 +325,94 @@ public class OpenXRayActivity extends SDLActivity {
             } else {
                 AppLog.i("Permissions", "WRITE_EXTERNAL_STORAGE is granted.");
             }
+        }
+    }
+
+    @Override
+    protected boolean isNativeStartReady() {
+        synchronized (mInitLock) {
+            return mGameDataReady;
+        }
+    }
+
+    // Runs the first-run setup (asset extraction etc.) off the main thread so
+    // the UI stays responsive. On OEM ROMs with aggressive watchdog/ANR
+    // monitoring (e.g. MIUI) blocking the main thread for several seconds in
+    // onCreate() was reported as a hang and the app got killed.
+    private void startGameDirectoriesAsync() {
+        synchronized (mInitLock) {
+            if (mInitStarted) {
+                return;
+            }
+            mInitStarted = true;
+        }
+        showLoadingOverlay();
+        AppLog.i("Activity", "Preparing game data on background thread...");
+        new Thread(() -> {
+            try {
+                createGameDirectories();
+            } finally {
+                synchronized (mInitLock) {
+                    mGameDataReady = true;
+                }
+                runOnUiThread(this::completeGameInit);
+            }
+        }, "GameDataInitThread").start();
+    }
+
+    private void completeGameInit() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        hideLoadingOverlay();
+        AppLog.i("Activity", "Game data ready, starting engine.");
+        SDLActivity.handleNativeState();
+    }
+
+    private void showLoadingOverlay() {
+        if (mLoadingOverlay != null || mLayout == null) {
+            return;
+        }
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setBackgroundColor(0xFF000000);
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER);
+
+        ProgressBar spinner = new ProgressBar(this);
+        LinearLayout.LayoutParams spinnerLp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+        content.addView(spinner, spinnerLp);
+
+        TextView text = new TextView(this);
+        text.setText("Preparing game data...");
+        text.setTextColor(0xFFFFFFFF);
+        text.setTextSize(16);
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+        textLp.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        content.addView(text, textLp);
+
+        overlay.addView(content, new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT));
+        mLayout.addView(overlay, new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT));
+        overlay.bringToFront();
+        mLoadingOverlay = overlay;
+    }
+
+    private void hideLoadingOverlay() {
+        if (mLoadingOverlay != null) {
+            ViewGroup parent = (ViewGroup) mLoadingOverlay.getParent();
+            if (parent != null) {
+                parent.removeView(mLoadingOverlay);
+            }
+            mLoadingOverlay = null;
         }
     }
 
@@ -515,7 +611,7 @@ public class OpenXRayActivity extends SDLActivity {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 AppLog.i("Permissions", "Storage permission granted by user.");
-                createGameDirectories();
+                startGameDirectoriesAsync();
             } else {
                 AppLog.w("Permissions", "Storage permission DENIED by user.");
                 Toast.makeText(this, "Storage permission is required to load S.T.A.L.K.E.R. game files", Toast.LENGTH_LONG).show();
