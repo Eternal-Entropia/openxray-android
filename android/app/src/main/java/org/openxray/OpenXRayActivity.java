@@ -470,14 +470,79 @@ public class OpenXRayActivity extends SDLActivity {
                 AppLog.i("FileSystem", "No gamedata in APK assets, using external gamedata.");
             }
             File targetFsgame = new File(dir, "fsgame.ltx");
-            if (!targetFsgame.exists()) {
-                try {
-                    extractAssetFolder(resBase + "/fsgame.ltx", targetFsgame);
-                } catch (Exception ignored) {}
-            }
+            installFsgameConfig(resBase, targetFsgame);
             AppLog.i("FileSystem", "Asset check finished.");
         } catch (Exception e) {
             AppLog.e("FileSystem", "Error creating game directories / extracting assets: " + e.getMessage(), e);
+        }
+    }
+
+    // The engine mounts game archives (.db) only for the directories listed in
+    // fsgame.ltx. A stale or retail fsgame.ltx has no $arch_dir* entries, so the
+    // engine ends up with "0 archives" and exits with "Cannot find file
+    // system.ltx" while every log still looks healthy. Always install the
+    // bundled config, keeping one backup of a previously used file.
+    private void installFsgameConfig(String resBase, File targetFsgame) {
+        try {
+            byte[] bundled;
+            try (java.io.InputStream in = getAssets().open(resBase + "/fsgame.ltx")) {
+                bundled = readAll(in);
+            }
+            if (bundled == null || bundled.length == 0) {
+                AppLog.w("FileSystem", "Bundled fsgame.ltx missing for " + resBase + ", keeping the existing one.");
+                return;
+            }
+
+            if (targetFsgame.exists()) {
+                byte[] current = readFile(targetFsgame);
+                if (Arrays.equals(bundled, current)) {
+                    AppLog.i("FileSystem", "fsgame.ltx is up to date (" + bundled.length + " bytes).");
+                    return;
+                }
+                File backup = new File(targetFsgame.getParentFile(), "fsgame.ltx.user.bak");
+                if (!backup.exists()) {
+                    try (java.io.OutputStream out = new java.io.FileOutputStream(backup)) {
+                        out.write(current);
+                    }
+                    AppLog.i("FileSystem", "Previous fsgame.ltx (" + (current == null ? 0 : current.length)
+                            + " bytes) backed up as fsgame.ltx.user.bak");
+                }
+            }
+
+            try (java.io.OutputStream out = new java.io.FileOutputStream(targetFsgame)) {
+                out.write(bundled);
+            }
+            String text = new String(bundled, java.nio.charset.StandardCharsets.UTF_8);
+            if (!text.contains("$arch_dir$")) {
+                AppLog.w("FileSystem", "Bundled fsgame.ltx has no $arch_dir$ entry, game archives may not load.");
+            }
+            AppLog.i("FileSystem", "Installed bundled fsgame.ltx (" + bundled.length + " bytes).");
+        } catch (Exception e) {
+            AppLog.e("FileSystem", "Could not install fsgame.ltx: " + e.getMessage(), e);
+        }
+    }
+
+    private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {
+        if (in == null) {
+            return null;
+        }
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
+    }
+
+    private static byte[] readFile(File file) {
+        if (!file.exists()) {
+            return null;
+        }
+        try (java.io.FileInputStream in = new java.io.FileInputStream(file)) {
+            return readAll(in);
+        } catch (Exception e) {
+            return null;
         }
     }
 

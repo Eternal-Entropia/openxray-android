@@ -26,10 +26,26 @@ add_compile_definitions(
 
 # Link-time optimization
 include(CheckIPOSupported)
-check_ipo_supported(RESULT LTO_IS_SUPPORTED)
-if (LTO_IS_SUPPORTED)
+if (ANDROID)
+    # check_ipo_supported() runs its probe outside the Android ABI context: the
+    # NDK then builds it for armeabi-v7a with the long-removed -fuse-ld=gold,
+    # the probe fails and LTO is silently dropped from every release build.
+    # clang/lld do support ThinLTO for the real target, so enable it directly.
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASEMASTERGOLD ON)
+    set(LTO_IS_SUPPORTED "ON (forced for Android)")
+    # Same guardrail for the link step: CMake 3.22 picks the IPO linker flag via
+    # CMAKE_ANDROID_NDK_VERSION, which the NDK r27 toolchain never sets, so the
+    # comparison falls through and -fuse-ld=gold is used instead of lld. That
+    # breaks linking as soon as LTO is on.
+    set(CMAKE_C_LINK_OPTIONS_IPO "-fuse-ld=lld")
+    set(CMAKE_CXX_LINK_OPTIONS_IPO "-fuse-ld=lld")
+else()
+    check_ipo_supported(RESULT LTO_IS_SUPPORTED)
+    if (LTO_IS_SUPPORTED)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASEMASTERGOLD ON)
+    endif()
 endif()
 
 # Main compiler settings

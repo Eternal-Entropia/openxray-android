@@ -12,6 +12,7 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -199,6 +200,18 @@ public class AppLog {
         sb.append("[GAME DIRECTORY AUDIT]\n");
         File fsgame = new File(logDir, "fsgame.ltx");
         sb.append("fsgame.ltx:             ").append(fsgame.exists() ? "FOUND (" + fsgame.length() + " bytes)" : "MISSING").append("\n");
+        if (fsgame.exists()) {
+            // The engine mounts .db archives only for the folders listed in fsgame.ltx.
+            // A retail/legacy file without $arch_dir* means "0 archives" and a dead engine.
+            String fsgameText = readTextFile(fsgame);
+            boolean hasArch = fsgameText != null && fsgameText.contains("$arch_dir$");
+            sb.append("fsgame.ltx $arch_dir$:  ").append(hasArch ? "PRESENT" : "MISSING (archives will not be mounted!)").append("\n");
+        }
+
+        File engineLog = findEngineLog(logDir);
+        sb.append("Engine Log:             ")
+          .append(engineLog != null ? "FOUND (" + engineLog.getName() + ", " + engineLog.length() + " bytes)" : "NOT FOUND (engine did not start)")
+          .append("\n");
 
         File gamedata = new File(logDir, "gamedata");
         sb.append("gamedata/ folder:       ").append(gamedata.exists() ? "FOUND" : "NOT FOUND").append("\n");
@@ -253,6 +266,45 @@ public class AppLog {
                 name.toLowerCase(Locale.US).matches(".*\\.db\\d*$"));
         if (files != null) {
             out.addAll(Arrays.asList(files));
+        }
+    }
+
+    /**
+     * Locates the native engine log (written by the engine itself, not logcat).
+     * It is the only place where fatal engine errors are recorded, and it is
+     * written next to the game data.
+     */
+    public static File findEngineLog(File dir) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        }
+        File[] logs = dir.listFiles((d, name) ->
+                name.startsWith("OpenXRay") && name.toLowerCase(Locale.US).endsWith(".log"));
+        if (logs == null || logs.length == 0) {
+            return null;
+        }
+        File newest = logs[0];
+        for (File f : logs) {
+            if (f.lastModified() > newest.lastModified()) {
+                newest = f;
+            }
+        }
+        return newest;
+    }
+
+    public static String readTextFile(File file) {
+        if (file == null || !file.exists() || file.length() == 0) {
+            return null;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return null;
         }
     }
 
