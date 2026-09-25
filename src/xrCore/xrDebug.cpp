@@ -321,6 +321,11 @@ void xrDebug::DoExit(const std::string& message)
     if (windowHandler)
         windowHandler->OnErrorDialog(true);
 
+    // There is no user-visible dialog on mobile, and Android's ShowMessage()
+    // just returns 'abort', so this message would be lost completely. Write it
+    // to the engine log / logcat before terminating, otherwise a CHECK_OR_EXIT
+    // looks exactly like a silent process kill in bug reports.
+    Log("[error] FATAL EXIT: %s", message.c_str());
     FlushLog();
 
     if (ShowErrorMessage)

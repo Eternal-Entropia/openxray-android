@@ -33,8 +33,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.Locale;
 
 public class LauncherActivity extends AppCompatActivity {
@@ -536,6 +538,7 @@ public class LauncherActivity extends AppCompatActivity {
         File logcatFile = new File(logDir, "openxray_logcat.log");
         File appLogBkpFile = new File(logDir, "openxray_app.log.bkp");
         File logcatBkpFile = new File(logDir, "openxray_logcat.log.bkp");
+        File engineLog = AppLog.findEngineLog(logDir);
 
         StringBuilder content = new StringBuilder();
         content.append("Log directory: ").append(logDir.getAbsolutePath()).append("\n\n");
@@ -552,6 +555,30 @@ public class LauncherActivity extends AppCompatActivity {
             content.append(readLastLines(appLogBkpFile, 150)).append("\n\n");
         }
 
+        // The engine writes its own log; fatal engine errors (CHECK_OR_EXIT,
+        // R_ASSERT) only ever appear there.
+        if (engineLog != null) {
+            content.append("=== [").append(engineLog.getName()).append(" (Engine Log)] (last 200 lines) ===\n");
+            content.append(readLastLines(engineLog, 200)).append("\n\n");
+            File engineLogBkp = new File(engineLog.getParentFile(),
+                    engineLog.getName().replaceAll("\\.log$", ".bkp"));
+            if (engineLogBkp.exists() && engineLogBkp.length() > 0) {
+                content.append("=== [").append(engineLogBkp.getName()).append(" (Engine Log, Previous Session)] (last 200 lines) ===\n");
+                content.append(readLastLines(engineLogBkp, 200)).append("\n\n");
+            }
+        } else {
+            content.append("=== [Engine Log] ===\n");
+            content.append("No OpenXRay_*.log found: the engine never got far enough to create its log.\n\n");
+        }
+
+        // fsgame.ltx decides which .db archives get mounted - dump it verbatim.
+        File fsgame = new File(logDir, "fsgame.ltx");
+        if (fsgame.exists()) {
+            content.append("=== [fsgame.ltx] ===\n");
+            String fsgameText = AppLog.readTextFile(fsgame);
+            content.append(fsgameText != null ? fsgameText : "(unreadable)").append("\n\n");
+        }
+
         if (logcatFile.exists()) {
             content.append("=== [openxray_logcat.log] (last 100 lines) ===\n");
             content.append(readLastLines(logcatFile, 100)).append("\n");
@@ -560,6 +587,14 @@ public class LauncherActivity extends AppCompatActivity {
         if (logcatBkpFile.exists() && logcatBkpFile.length() > 0) {
             content.append("\n=== [openxray_logcat.log.bkp (Previous Session Logcat)] (last 100 lines) ===\n");
             content.append(readLastLines(logcatBkpFile, 100)).append("\n");
+        }
+
+        // Native crashes are logged by the system ("Fatal signal 11"), not by the
+        // app, so a plain logcat capture of our own pid never sees them.
+        String crashBuffer = readLogcatBuffer("crash");
+        if (crashBuffer != null && !crashBuffer.isEmpty()) {
+            content.append("\n=== [logcat -b crash (Native Crash / Tombstone)] (last 80 lines) ===\n");
+            content.append(crashBuffer).append("\n");
         }
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
@@ -574,7 +609,19 @@ public class LauncherActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
             .setTitle("OpenXRay Logs")
             .setView(sv)
-            .setPositiveButton("Copy to Clipboard", (dialog, which) -> {
+            .setPositiveButton("Save to File", (dialog, which) -> {
+                // Copy/pasting this into a chat window truncates it, and the tail
+                // is exactly the interesting part, so keep a full copy on disk.
+                File report = new File(logDir, "openxray_report.txt");
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(report, false))) {
+                    writer.write(content.toString());
+                } catch (Exception e) {
+                    Toast.makeText(this, "Could not save report: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    return;
+                }
+                Toast.makeText(this, "Saved to " + report.getAbsolutePath(), Toast.LENGTH_LONG).show();
+            })
+            .setNeutralButton("Copy to Clipboard", (dialog, which) -> {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("OpenXRay Logs", content.toString());
                 if (clipboard != null) {
@@ -584,6 +631,27 @@ public class LauncherActivity extends AppCompatActivity {
             })
             .setNegativeButton("Close", null)
             .show();
+    }
+
+    // Reads a logcat buffer without -f. Returns null when the app is not
+    // allowed to read it (crash buffer needs READ_LOGS on modern Android).
+    private String readLogcatBuffer(String buffer) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("logcat", "-b", buffer, "-d", "-v", "threadtime", "-t", "80");
+            Process p = pb.start();
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new java.io.InputStreamReader(p.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append('\n');
+                }
+            }
+            p.waitFor();
+            return sb.toString().trim();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String readLastLines(File file, int maxLines) {

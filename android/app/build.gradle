@@ -30,10 +30,27 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            // Defaults to the well-known debug key so a release build can be
+            // installed over an existing debug install without uninstalling.
+            // Override for a real release key, e.g.
+            //   ./gradlew assembleRelease -POXRAY_KEYSTORE=/path/key.jks \
+            //       -POXRAY_KEYSTORE_PASS=... -POXRAY_KEY_ALIAS=... -POXRAY_KEY_PASS=...
+            def storePath = project.findProperty("OXRAY_KEYSTORE")
+                    ?: "${System.getProperty('user.home')}/.android/debug.keystore"
+            storeFile file(storePath)
+            storePassword project.findProperty("OXRAY_KEYSTORE_PASS") ?: "android"
+            keyAlias project.findProperty("OXRAY_KEY_ALIAS") ?: "androiddebugkey"
+            keyPassword project.findProperty("OXRAY_KEY_PASS") ?: "android"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
             externalNativeBuild {
                 cmake {
                     arguments "-DCMAKE_BUILD_TYPE=Release"

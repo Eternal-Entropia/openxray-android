@@ -1060,6 +1060,39 @@ void CLocatorAPI::_initialize(u32 flags, pcstr target_folder, pcstr fs_name)
         R_ASSERT(path_exist("$app_data_root$"));
     };
 
+    if (m_archives.empty())
+    {
+        // Nothing got mounted. Without the .db archives the engine cannot read
+        // system.ltx and terminates with a bare "Cannot find file ..." error, so
+        // this is always a broken setup: fsgame.ltx is missing, not writable,
+        // stale (e.g. a retail copy without the $arch_dir* entries) or the game
+        // data is in an unexpected place. Scan the retail layout as a fallback
+        // so the game still starts; ProcessArchive() ignores duplicates.
+        Msg("[error] No game archives (.db) registered - fsgame.ltx is missing, "
+            "read-only or does not match this game. Falling back to a direct scan of the retail archive folders.");
+
+        static constexpr cpcstr retail_archive_dirs[] =
+        {
+            "",             // $fs_root$      : gamedata.db*
+            "mp",           // mp\            : gamedata_mp.db*
+            "levels",       // levels\        : levels*.db
+            "resources",    // resources\     : resources*.db
+            "localization", // localization\  : localization*.db
+            "patches",      // patches\       : patches*.db
+        };
+
+        string_path fs_root;
+        update_path(fs_root, "$fs_root$", "");
+        for (cpcstr sub_dir : retail_archive_dirs)
+        {
+            string_path scan_root;
+            strconcat(scan_root, fs_root, sub_dir);
+            bNoRecurse = true;
+            Recurse(scan_root);
+        }
+        Msg("FS: fallback archive scan registered %zu archives.", m_archives.size());
+    }
+
     const size_t M2 = Memory.mem_usage();
     Msg("FS: %zu files cached %zu archives, %zuKb memory used.", m_files.size(), m_archives.size(), (M2 - M1) / 1024);
 
