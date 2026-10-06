@@ -160,6 +160,15 @@ void CRenderDevice::UpdateWindowProps()
         SDL_SetWindowPosition(m_sdlWnd, rect.x, rect.y);
     }
 
+#ifdef __ANDROID__
+    // On Android there is no windowed mode: shrinking the SDL window to
+    // psDeviceMode shrinks the EGL surface and the game renders in a
+    // corner. Force the window to the display size; the engine renders
+    // to the smaller FBO and CHW::Present stretches it to the window.
+    SDL_DisplayMode current;
+    SDL_GetCurrentDisplayMode(psDeviceMode.Monitor, &current);
+    SDL_SetWindowSize(m_sdlWnd, current.w, current.h);
+#else
     if (psDeviceMode.WindowStyle != rsFullscreenBorderless)
         SDL_SetWindowSize(m_sdlWnd, psDeviceMode.Width, psDeviceMode.Height);
     else
@@ -169,6 +178,7 @@ void CRenderDevice::UpdateWindowProps()
 
         SDL_SetWindowSize(m_sdlWnd, current.w, current.h);
     }
+#endif
 
     if (windowed)
     {
@@ -184,12 +194,14 @@ void CRenderDevice::UpdateWindowProps()
         SDL_SetWindowResizable(m_sdlWnd, SDL_FALSE);
         SDL_SetWindowFullscreen(m_sdlWnd, SDL_WINDOW_FULLSCREEN);
 
+#ifndef __ANDROID__
         SDL_DisplayMode mode;
         SDL_GetWindowDisplayMode(m_sdlWnd, &mode);
         mode.w = psDeviceMode.Width;
         mode.h = psDeviceMode.Height;
         mode.refresh_rate = psDeviceMode.RefreshRate;
         SDL_SetWindowDisplayMode(m_sdlWnd, &mode);
+#endif
     }
 
     SDL_PumpEvents();
