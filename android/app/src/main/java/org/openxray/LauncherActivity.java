@@ -515,8 +515,6 @@ public class LauncherActivity extends AppCompatActivity {
         gameIntent.putExtra("extra_args", finalArgs);
         gameIntent.putExtra("extra_game_path", pathStr);
         gameIntent.putExtra("extra_game_mode", gameMode);
-        gameIntent.putExtra("extra_res_width", resW);
-        gameIntent.putExtra("extra_res_height", resH);
         gameIntent.putExtra("extra_render_backend", renderBackend);
         gameIntent.putExtra("extra_look_sensitivity", sens);
         gameIntent.putExtra("extra_touch_opacity", opacity);

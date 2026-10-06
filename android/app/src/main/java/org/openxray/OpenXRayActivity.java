@@ -129,19 +129,6 @@ public class OpenXRayActivity extends SDLActivity {
     }
 
     @Override
-    protected org.libsdl.app.SDLSurface createSDLSurface(android.content.Context context) {
-        org.libsdl.app.SDLSurface surface = super.createSDLSurface(context);
-        Intent intent = getIntent();
-        int targetW = (intent != null) ? intent.getIntExtra("extra_res_width", 0) : 0;
-        int targetH = (intent != null) ? intent.getIntExtra("extra_res_height", 0) : 0;
-        if (targetW > 0 && targetH > 0) {
-            AppLog.i("Video", "Setting fixed surface resolution from launcher: " + targetW + "x" + targetH);
-            surface.setFixedResolution(targetW, targetH);
-        }
-        return surface;
-    }
-
-    @Override
     public void setOrientationBis(int w, int h, boolean resizable, String hint) {
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }

@@ -356,21 +356,13 @@ void CHW::EndScene() { }
 
 void CHW::Present()
 {
-    // The scene was rendered into offscreen targets sized Device.dwWidth x
-    // dwHeight. With internal resolution scaling active that is smaller than the
-    // window, so upscale into the default framebuffer (native size) on the way out.
-    const int src_w = (int)Device.dwWidth;
-    const int src_h = (int)Device.dwHeight;
-    const int dst_w = (int)psDeviceMode.Width;
-    const int dst_h = (int)psDeviceMode.Height;
-
     glBindFramebuffer(GL_READ_FRAMEBUFFER, pFB);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     CHK_GL(glBlitFramebuffer(
-        0, 0, src_w, src_h,
-        0, 0, dst_w, dst_h,
-        GL_COLOR_BUFFER_BIT, GL_LINEAR));
+        0, 0, Device.dwWidth, Device.dwHeight,
+        0, 0, Device.dwWidth, Device.dwHeight,
+        GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
     SDL_GL_SwapWindow(m_window);
     CurrentBackBuffer = (CurrentBackBuffer + 1) % BackBufferCount;

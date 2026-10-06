@@ -26,16 +26,7 @@ string512 g_sBenchmarkName;
 int ps_fps_limit = 501;
 int ps_fps_limit_in_menu = 60;
 
-#if defined(XR_PLATFORM_ANDROID) && !defined(_EDITOR)
-// Internal resolution scale. 1.0 = native window resolution. Lowering it shrinks
-// every offscreen render target (R2 allocates them from Device.dwWidth/dwHeight),
-// which is the single biggest fill-rate win on mobile GPUs. The UI scales itself
-// from dwWidth/dwHeight (UICore::OnDeviceReset) and Present() upscales on blit,
-// so gameplay and menus stay laid out correctly.
-float ps_render_scale = 0.6f;
-#else
 float ps_render_scale = 1.0f;
-#endif
 
 bool g_bLoaded = false;
 ref_light precache_light = 0;

@@ -276,30 +276,8 @@ void CRenderDevice::SelectResolution(const bool windowed)
         }
     }
 
-    // Internal resolution scaling: keep the window at its native size but render
-    // into smaller offscreen targets. Clamped so a tiny window never collapses to
-    // zero and the aspect ratio is preserved to within a pixel.
-    if (ps_render_scale > 0.0f && ps_render_scale < 1.0f)
-    {
-        const u32 scaled_w = (u32)(psDeviceMode.Width * ps_render_scale);
-        const u32 scaled_h = (u32)(psDeviceMode.Height * ps_render_scale);
-        dwWidth = scaled_w > 0 ? scaled_w : psDeviceMode.Width;
-        dwHeight = scaled_h > 0 ? scaled_h : psDeviceMode.Height;
-
-        static u32 s_logged_w = 0, s_logged_h = 0;
-        if (dwWidth != s_logged_w || dwHeight != s_logged_h)
-        {
-            s_logged_w = dwWidth;
-            s_logged_h = dwHeight;
-            Msg("* RENDER SCALE %.2f: render %ux%u -> window %ux%u",
-                ps_render_scale, dwWidth, dwHeight, psDeviceMode.Width, psDeviceMode.Height);
-        }
-    }
-    else
-    {
-        dwWidth = psDeviceMode.Width;
-        dwHeight = psDeviceMode.Height;
-    }
+    dwWidth = psDeviceMode.Width;
+    dwHeight = psDeviceMode.Height;
 }
 
 SDL_Window* CRenderDevice::GetApplicationWindow()
