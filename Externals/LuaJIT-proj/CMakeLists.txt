@@ -138,12 +138,21 @@ set(CCOPTIONS "${CCOPT};${XCFLAGS}")
 
 target_compile_options(xrLuaJIT PRIVATE ${CCOPTIONS})
 
+if (ANDROID)
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} ${CCOPTIONS} --target=aarch64-none-linux-android24 --sysroot=${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -E lj_arch.h -dM
+        WORKING_DIRECTORY "${LUAJIT_DIR}"
+        OUTPUT_VARIABLE TESTARCH_OUTPUT
+        ERROR_VARIABLE TESTARCH_ERROR
+    )
+else()
 execute_process(
     COMMAND ${CMAKE_C_COMPILER} ${CCOPTIONS} -E lj_arch.h -dM
     WORKING_DIRECTORY "${LUAJIT_DIR}"
     OUTPUT_VARIABLE TESTARCH_OUTPUT
     ERROR_VARIABLE TESTARCH_ERROR
-)
+    )
+endif()
 
 if(NOT "${TESTARCH_ERROR}" STREQUAL "")
     message("TESTARCH_ERROR=${TESTARCH_ERROR}")
@@ -326,7 +335,7 @@ set(DASM_DASC "${LUAJIT_DIR}/vm_${DASM_ARCH}.dasc")
 set(DASM "${LUAJIT_DIR}/../dynasm/dynasm.lua")
 set(BUILDVM_ARCH "${CMAKE_CURRENT_BINARY_DIR}/buildvm_arch.h")
 
-if (ANDROID)
+if (ANDROID AND WIN32)
     set(MINILUA_FILE "${CMAKE_SOURCE_DIR}/android/minilua.exe")
     set(BUILDVM_FILE "${CMAKE_SOURCE_DIR}/android/buildvm.exe")
 

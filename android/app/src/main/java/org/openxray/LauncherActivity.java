@@ -607,9 +607,7 @@ public class LauncherActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
             .setTitle("OpenXRay Logs")
             .setView(sv)
-            .setPositiveButton("Save to File", (dialog, which) -> {
-                // Copy/pasting this into a chat window truncates it, and the tail
-                // is exactly the interesting part, so keep a full copy on disk.
+            .setPositiveButton("Share Zip", (dialog, which) -> {
                 File report = new File(logDir, "openxray_report.txt");
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(report, false))) {
                     writer.write(content.toString());
@@ -617,7 +615,7 @@ public class LauncherActivity extends AppCompatActivity {
                     Toast.makeText(this, "Could not save report: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     return;
                 }
-                Toast.makeText(this, "Saved to " + report.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                shareLogsZip(logDir, report);
             })
             .setNeutralButton("Copy to Clipboard", (dialog, which) -> {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
@@ -629,6 +627,53 @@ public class LauncherActivity extends AppCompatActivity {
             })
             .setNegativeButton("Close", null)
             .show();
+    }
+
+    private void shareLogsZip(File logDir, File report) {
+        File zipFile = new File(logDir, "openxray_logs.zip");
+        try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(
+                new java.io.FileOutputStream(zipFile))) {
+            addToZip(zos, report, report.getName());
+            for (String name : new String[]{
+                    "openxray_app.log", "openxray_app.log.bkp",
+                    "openxray_logcat.log", "openxray_logcat.log.bkp",
+                    "frame_trace.log", "fsgame.ltx"}) {
+                File f = new File(logDir, name);
+                if (f.exists() && f.length() > 0) addToZip(zos, f, name);
+            }
+            File engineLog = AppLog.findEngineLog(logDir);
+            if (engineLog != null) {
+                addToZip(zos, engineLog, engineLog.getName());
+                File bkp = new File(engineLog.getParentFile(),
+                        engineLog.getName().replaceAll("\\.log$", ".bkp"));
+                if (bkp.exists() && bkp.length() > 0) addToZip(zos, bkp, bkp.getName());
+            }
+            File userLtx = new File(logDir, "_appdata_/user.ltx");
+            if (userLtx.exists()) addToZip(zos, userLtx, "user.ltx");
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not create zip: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                this, getPackageName() + ".fileprovider", zipFile);
+        android.content.Intent share = new android.content.Intent(android.content.Intent.ACTION_SEND);
+        share.setType("application/zip");
+        share.putExtra(android.content.Intent.EXTRA_STREAM, uri);
+        share.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        share.setClipData(android.content.ClipData.newUri(getContentResolver(), "logs", uri));
+        startActivity(android.content.Intent.createChooser(share, "Share logs"));
+    }
+
+    private static void addToZip(java.util.zip.ZipOutputStream zos, File f, String entryName)
+            throws java.io.IOException {
+        zos.putNextEntry(new java.util.zip.ZipEntry(entryName));
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
+            byte[] buf = new byte[64 * 1024];
+            int n;
+            while ((n = fis.read(buf)) > 0) zos.write(buf, 0, n);
+        }
+        zos.closeEntry();
     }
 
     // Reads a logcat buffer without -f. Returns null when the app is not

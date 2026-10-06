@@ -356,13 +356,36 @@ void CHW::EndScene() { }
 
 void CHW::Present()
 {
+    // The engine renders into a dwWidth x dwHeight FBO. When it is smaller
+    // than the SDL window (vid_mode below native on Android), stretch it
+    // to the full drawable so the picture is not stuck in a corner.
+    int w = 0, h = 0;
+    SDL_GL_GetDrawableSize(m_window, &w, &h);
+    if (!w || !h)
+    {
+        w = static_cast<int>(Device.dwWidth);
+        h = static_cast<int>(Device.dwHeight);
+    }
+    {
+        static bool once = false;
+        if (!once)
+        {
+            once = true;
+            Msg("* CHW::Present: FBO %ux%u, window %dx%d", Device.dwWidth, Device.dwHeight, w, h);
+        }
+    }
+
     glBindFramebuffer(GL_READ_FRAMEBUFFER, pFB);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
+    // Clear black so borderless letterboxing never shows stale garbage.
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     CHK_GL(glBlitFramebuffer(
         0, 0, Device.dwWidth, Device.dwHeight,
-        0, 0, Device.dwWidth, Device.dwHeight,
-        GL_COLOR_BUFFER_BIT, GL_NEAREST));
+        0, 0, w, h,
+        GL_COLOR_BUFFER_BIT, GL_LINEAR));
 
     SDL_GL_SwapWindow(m_window);
     CurrentBackBuffer = (CurrentBackBuffer + 1) % BackBufferCount;
