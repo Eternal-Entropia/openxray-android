@@ -139,18 +139,29 @@ set(CCOPTIONS "${CCOPT};${XCFLAGS}")
 target_compile_options(xrLuaJIT PRIVATE ${CCOPTIONS})
 
 if (ANDROID)
+    # Pick the LLVM target triple from the ABI so 32-bit (armeabi-v7a),
+    # x86 and x64 builds detect the right LuaJIT architecture too.
+    if (CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a")
+        set(_luajit_target "arm-linux-androideabi24")
+    elseif (CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
+        set(_luajit_target "x86_64-none-linux-android24")
+    elseif (CMAKE_ANDROID_ARCH_ABI STREQUAL "x86")
+        set(_luajit_target "i686-none-linux-android24")
+    else()
+        set(_luajit_target "aarch64-none-linux-android24")
+    endif()
     execute_process(
-        COMMAND ${CMAKE_C_COMPILER} ${CCOPTIONS} --target=aarch64-none-linux-android24 --sysroot=${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -E lj_arch.h -dM
+        COMMAND ${CMAKE_C_COMPILER} ${CCOPTIONS} --target=${_luajit_target} --sysroot=${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -E lj_arch.h -dM
         WORKING_DIRECTORY "${LUAJIT_DIR}"
         OUTPUT_VARIABLE TESTARCH_OUTPUT
         ERROR_VARIABLE TESTARCH_ERROR
     )
 else()
-execute_process(
-    COMMAND ${CMAKE_C_COMPILER} ${CCOPTIONS} -E lj_arch.h -dM
-    WORKING_DIRECTORY "${LUAJIT_DIR}"
-    OUTPUT_VARIABLE TESTARCH_OUTPUT
-    ERROR_VARIABLE TESTARCH_ERROR
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} ${CCOPTIONS} -E lj_arch.h -dM
+        WORKING_DIRECTORY "${LUAJIT_DIR}"
+        OUTPUT_VARIABLE TESTARCH_OUTPUT
+        ERROR_VARIABLE TESTARCH_ERROR
     )
 endif()
 

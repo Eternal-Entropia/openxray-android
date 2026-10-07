@@ -23,6 +23,13 @@ option(XRAY_USE_GLES     "Use OpenGL ES (3.2) renderer backend" OFF)
 include(XRay.Build)
 include(XRay.Packaging)
 
+if (ANDROID AND CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
+    # 16 KB page alignment is required for arm64 devices with big pages;
+    # 32-bit ABI targets use the default (4 KiB) page alignment.
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,-z,max-page-size=16384")
+    string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,-z,max-page-size=16384")
+endif()
+
 add_subdirectory(Externals)
 add_subdirectory(src)
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/res/CMakeLists.txt")

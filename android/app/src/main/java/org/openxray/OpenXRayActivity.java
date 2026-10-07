@@ -462,6 +462,7 @@ public class OpenXRayActivity extends SDLActivity {
             File targetFsgame = new File(dir, "fsgame.ltx");
             installFsgameConfig(resBase, targetFsgame);
             AppLog.i("FileSystem", "Asset check finished.");
+            verifyOverlayScripts(dir, gameMode, resBase);
         } catch (Exception e) {
             AppLog.e("FileSystem", "Error creating game directories / extracting assets: " + e.getMessage(), e);
         }
@@ -569,6 +570,52 @@ public class OpenXRayActivity extends SDLActivity {
             }
         } catch (Exception e) {
             AppLog.e("FileSystem", "extractAssetFolder error for " + assetPath + ": " + e.getMessage(), e);
+        }
+    }
+
+    // Sanity-check that the OpenXRay-specific overlay scripts/configs of the
+    // selected game mode are actually on disk before starting the engine.
+    // A missing script folder (e.g. a stale manual sync) makes the engine
+    // fall back into a broken state — doors with Lua on_use silently fail,
+    // touch UI callbacks disappear, etc. So detect it and re-extract.
+    private void verifyOverlayScripts(File gameDir, String gameMode, String resBase) {
+        String[] requiredScripts = "soc".equals(gameMode)
+                ? new String[] { "class_registrator.script", "move_mgr.script",
+                                 "task_manager.script", "death_manager.script", "ui_main_menu.script" }
+                : new String[] { "_g.script", "ui_main_menu.script",
+                                 "xr_s.script", "xr_logic.script" };
+        File scriptsDir = new File(new File(gameDir, "gamedata"), "scripts");
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        if (!scriptsDir.isDirectory()) {
+            missing.add("gamedata/scripts (folder missing)");
+        } else {
+            for (String name : requiredScripts) {
+                File f = new File(scriptsDir, name);
+                if (!f.isFile() || f.length() == 0) {
+                    missing.add("gamedata/scripts/" + name);
+                }
+            }
+        }
+        File configDir = new File(new File(gameDir, "gamedata"),
+                "soc".equals(gameMode) ? "config" : "configs");
+        File openxrayLtx = new File(configDir, "openxray.ltx");
+        if (!openxrayLtx.isFile() || openxrayLtx.length() == 0) {
+            missing.add("gamedata/" + configDir.getName() + "/openxray.ltx");
+        }
+
+        if (!missing.isEmpty()) {
+            AppLog.w("FileSystem", "Overlay scripts missing for mode '" + gameMode
+                    + "': " + missing + " — re-extracting from APK assets.");
+            try {
+                extractAssetFolder(resBase + "/gamedata", new File(gameDir, "gamedata"));
+                patchGameMode(gameDir, gameMode);
+            } catch (Exception e) {
+                AppLog.e("FileSystem", "Failed to re-extract overlay: " + e.getMessage(), e);
+            }
+        } else {
+            int count = scriptsDir.list() != null ? scriptsDir.list().length : 0;
+            AppLog.i("FileSystem", "Overlay scripts check OK: " + count
+                    + " script files present in " + scriptsDir.getAbsolutePath());
         }
     }
 
