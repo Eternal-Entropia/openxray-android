@@ -25,7 +25,7 @@ another forks of this port:
 
 lesad710 telegram channel about openxray-android fork: https://t.me/st_mobile_port
 
-https://stalker-mobile.ru/
+сука eternal ты хотяб смотри что пишешь
 
 thanks: https://github.com/TmLev/xray-16/tree/refs/heads/tmlev/shadow-of-chernobyl
 
